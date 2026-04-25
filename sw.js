@@ -1,5 +1,5 @@
 var CACHE = 'brew-coach-v043';
-var FILES = ['./index.html', './manifest.json'];
+var FILES = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', function(e) {
   e.waitUntil(
