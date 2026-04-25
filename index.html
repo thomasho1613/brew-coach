@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Brew Coach">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="./manifest.json">
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
+
+<title>Brew Coach v0.4.3</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --accent: #0f3460;
+    --highlight: #e94560;
+    --text: #eee;
+    --muted: #aaa;
+    --green: #4ecca3;
+    --orange: #f0a500;
+    --blue: #42a5f5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 12px;
+    padding-bottom: 90px;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+  h1 { text-align: center; font-size: 1.4rem; margin-bottom: 2px; color: var(--green); }
+  .subtitle { text-align: center; color: var(--muted); font-size: 0.8rem; margin-bottom: 14px; }
+
+  /* ── TAB NAV ── */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: var(--card);
+    border-top: 1px solid var(--accent);
+    display: flex;
+    justify-content: space-around;
+    padding: 6px 0;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+  }
+  .tab-btn {
+    background: none; border: none; color: var(--muted);
+    font-size: 0.7rem; cursor: pointer; padding: 4px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .tab-btn.active { color: var(--green); }
+  .tab-btn svg { width: 22px; height: 22px; fill: currentColor; }
+  .tab-page { display: none; max-width: 500px; margin: 0 auto; }
+  .tab-page.visible { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card); border-radius: 12px; padding: 16px;
+    border: 1px solid var(--accent); margin-bottom: 14px;
+  }
+  .card h2 {
+    font-size: 1rem; margin-bottom: 10px; color: var(--green);
+    border-bottom: 1px solid var(--accent); padding-bottom: 5px;
+  }
+
+  /* ── FIELDS ── */
+  .field { margin-bottom: 10px; }
+  .field label {
+    display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 2px;
+  }
+  .field input, .field select {
+    width: 100%; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--accent); background: var(--bg);
+    color: var(--text); font-size: 1rem;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234ecca3' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--green); }
+  .field input[type="range"] {
+    padding: 0; height: 36px;
+    -webkit-appearance: auto; appearance: auto;
+    accent-color: var(--green);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: block; width: 100%; padding: 14px; border: none; border-radius: 10px;
+    background: var(--highlight); color: #fff; font-size: 1.05rem; font-weight: 700;
+    cursor: pointer; margin-top: 12px;
+  }
+  .btn:active { opacity: 0.85; }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn-secondary { background: var(--accent); color: var(--green); font-size: 0.9rem; padding: 10px; margin-top: 8px; }
+  .btn-danger { background: #6b2030; color: #e94560; font-size: 0.85rem; padding: 10px; margin-top: 8px; }
+  .btn-export { background: #0d7a3f; color: #fff; font-size: 0.9rem; padding: 10px; margin-top: 8px; }
+
+  /* ── RESULTS ── */
+  .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .result-box { background: var(--bg); border-radius: 8px; padding: 10px; text-align: center; }
+  .result-box .val { font-size: 1.4rem; font-weight: 700; color: var(--green); }
+  .result-box .lbl { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+  .zone-badge {
+    display: inline-block; padding: 5px 12px; border-radius: 16px;
+    font-weight: 600; font-size: 0.85rem; margin: 6px 0;
+  }
+  .zone-balanced { background: #0d7a3f; color: #fff; }
+  .zone-under { background: #b8860b; color: #fff; }
+  .zone-over { background: #a83232; color: #fff; }
+  .zone-other { background: var(--accent); color: var(--text); }
+  .cup-notes {
+    background: var(--bg); border-radius: 8px; padding: 10px;
+    font-size: 0.85rem; line-height: 1.4; margin-top: 8px;
+  }
+  .cup-notes strong { color: var(--orange); }
+  canvas { width: 100%; height: auto; display: block; }
+  .advisory {
+    background: var(--bg); border-radius: 8px; padding: 10px;
+    font-size: 0.78rem; line-height: 1.4; color: var(--muted);
+    max-height: 180px; overflow-y: auto; white-space: pre-wrap; margin-top: 8px;
+  }
+  .evidence {
+    font-size: 0.72rem; color: var(--muted); max-height: 120px;
+    overflow-y: auto; margin-top: 8px; padding-left: 16px;
+  }
+  .evidence li { margin-bottom: 3px; }
+
+  /* ── GRIND DISPLAY ── */
+  .grind-readout {
+    background: var(--bg); border: 1px solid var(--accent); border-radius: 8px;
+    padding: 8px; margin-top: 4px;
+    display: flex; justify-content: space-around; text-align: center;
+  }
+  .grind-val { font-size: 1.15rem; font-weight: 700; color: var(--green); }
+  .grind-lbl { font-size: 0.6rem; color: var(--muted); }
+  .grind-info {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 3px; font-size: 0.7rem;
+  }
+  .grind-info span { color: var(--muted); }
+  .brew-guide-tag {
+    background: var(--accent); padding: 2px 8px; border-radius: 8px;
+    color: var(--green); font-weight: 600; font-size: 0.7rem;
+  }
+  .hidden { display: none !important; }
+
+  /* ── LOG TABLE ── */
+  .log-scroll { max-height: 400px; overflow: auto; -webkit-overflow-scrolling: touch; }
+  .log-table { width: 100%; border-collapse: collapse; font-size: 0.68rem; }
+  .log-table th {
+    background: var(--accent); color: var(--green); padding: 6px 3px;
+    text-align: left; position: sticky; top: 0; z-index: 1; white-space: nowrap;
+  }
+  .log-table td {
+    padding: 5px 3px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    white-space: nowrap;
+  }
+  .log-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .log-count { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+  .empty-state { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 0.9rem; }
+
+  /* ── REFRACTOMETER ROW ── */
+  .refract-row { display: flex; gap: 8px; align-items: flex-end; }
+  .refract-row .refract-input { flex: 1; }
+  .refract-row .refract-input label { font-size: 0.72rem; color: var(--muted); display: block; margin-bottom: 2px; }
+  .refract-row .refract-input input {
+    width: 100%; padding: 7px; border-radius: 6px;
+    border: 1px solid var(--accent); background: var(--bg);
+    color: var(--text); font-size: 1rem;
+  }
+  .refract-btn {
+    padding: 10px 14px; border: none; border-radius: 8px;
+    background: var(--orange); color: #000; font-weight: 700;
+    cursor: pointer; font-size: 0.85rem; white-space: nowrap;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>☕ Brew Coach</h1>
+<p class="subtitle">v0.4.3 — offline · evidence-audited</p>
+
+<!-- ═══════════════════════════════════════
+     PAGE: BREW
+     ═══════════════════════════════════════ -->
+<div class="tab-page visible" id="pageBrew">
+
+  <div class="card">
+    <h2>Recipe</h2>
+
+    <div class="field">
+      <label>Dose (g)</label>
+      <input type="number" id="dose" value="20" step="0.1" min="5" max="60" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Water (g)</label>
+      <input type="number" id="water" value="300" step="1" min="50" max="1000" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Roast level</label>
+      <select id="roast">
+        <option value="light">Light</option>
+        <option value="light-medium">Light-Medium</option>
+        <option value="medium" selected>Medium</option>
+        <option value="medium-dark">Medium-Dark</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Water temperature (°C)</label>
+      <input type="number" id="temp" value="88" step="0.5" min="70" max="100" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Brew time (seconds)</label>
+      <input type="number" id="brewTime" value="124" step="1" min="30" max="600" inputmode="numeric">
+    </div>
+
+    <div class="field">
+      <label>Dripper</label>
+      <select id="geometry">
+        <option value="v60-01">V60-01</option>
+        <option value="v60-02" selected>V60-02 / Hario Switch</option>
+        <option value="v60-03">V60-03</option>
+        <option value="kalita-155">Kalita 155</option>
+        <option value="kalita-185">Kalita 185</option>
+        <option value="origami">Origami</option>
+        <option value="chemex">Chemex</option>
+        <option value="flat-generic">Flat-bottom (generic)</option>
+        <option value="cone-generic">Cone (generic)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Grinder</label>
+      <select id="grinderType" onchange="onGrinderChange()">
+        <option value="c40" selected>Comandante C40 (~30 µm/click)</option>
+        <option value="timemore-c2">Timemore C2/C3 (~25 µm/click)</option>
+        <option value="timemore-s3">Timemore Chestnut S3 (~15 µm/click)</option>
+        <option value="1zpresso-jx">1Zpresso JX (~12.5 µm/click)</option>
+        <option value="1zpresso-j">1Zpresso J-Max/J-Ultra (~8.8 µm/click)</option>
+        <option value="1zpresso-k">1Zpresso K-series (~22 µm/click)</option>
+        <option value="1zpresso-q">1Zpresso Q2/QS (~25 µm/click)</option>
+        <option value="kingrinder-k4">KINGrinder K4/K6 (~16 µm/click)</option>
+        <option value="helor-101">Helor 101 (~25 µm/click)</option>
+        <option value="fellow-ode">Fellow Ode (1-11, ~70 µm/step)</option>
+        <option value="baratza-encore">Baratza Encore (1-40, ~25 µm/step)</option>
+        <option value="custom-um">Enter microns directly</option>
+      </select>
+    </div>
+
+    <div class="field" id="clicksField">
+      <label id="sliderLabel">Clicks</label>
+      <input type="range" id="clicks" min="8" max="40" value="20" oninput="onSliderMove()">
+      <div class="grind-readout">
+        <div>
+          <div class="grind-val" id="dispClicks">20</div>
+          <div class="grind-lbl" id="dispUnit">clicks</div>
+        </div>
+        <div>
+          <div class="grind-val" id="dispUm">600</div>
+          <div class="grind-lbl">µm (median)</div>
+        </div>
+      </div>
+      <div class="grind-info">
+        <span>← finer</span>
+        <span class="brew-guide-tag" id="brewGuide">☕ pour-over sweet spot</span>
+        <span>coarser →</span>
+      </div>
+    </div>
+
+    <div class="field hidden" id="customUmField">
+      <label>Particle size (µm)</label>
+      <input type="number" id="customUm" value="600" min="100" max="1200" step="10" inputmode="numeric">
+    </div>
+
+    <div class="field">
+      <label>Pour style</label>
+      <select id="pourStyle">
+        <option value="continuous" selected>Continuous</option>
+        <option value="pulse-2-3">Pulse (2-3 pours)</option>
+        <option value="pulse-4-6">Pulse (4-6 pours)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Pour pattern</label>
+      <select id="pourPattern">
+        <option value="none">Not specified</option>
+        <option value="center">Centre</option>
+        <option value="spiral">Spiral</option>
+        <option value="spiral-center">Spiral → Centre</option>
+        <option value="center-spiral" selected>Centre → Spiral</option>
+        <option value="melodrip">Melodrip</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Notes (optional)</label>
+      <input type="text" id="brewNotes" placeholder="e.g. Ethiopia Yirgacheffe, fruity">
+    </div>
+
+    <button class="btn" id="brewBtn" onclick="calculate()">Brew It ☕</button>
+  </div>
+
+  <!-- RESULTS SECTION -->
+  <div id="resultsSection" class="hidden">
+
+    <div class="card">
+      <h2>Prediction</h2>
+      <div class="results-grid">
+        <div class="result-box">
+          <div class="val" id="eyVal">—</div>
+          <div class="lbl">Extraction Yield %</div>
+        </div>
+        <div class="result-box">
+          <div class="val" id="tdsVal">—</div>
+          <div class="lbl">TDS %</div>
+        </div>
+        <div class="result-box">
+          <div class="val" id="euiVal">—</div>
+          <div class="lbl">EUI</div>
+        </div>
+        <div class="result-box">
+          <div class="val" id="bevVal">—</div>
+          <div class="lbl">Beverage (g)</div>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <span class="zone-badge" id="zoneBadge">—</span>
+      </div>
+      <div class="cup-notes" id="cupNotes"></div>
+
+      <!-- Refractometer -->
+      <div style="margin-top:14px; padding-top:10px; border-top:1px solid var(--accent);">
+        <div style="font-size:0.9rem; color:var(--orange); font-weight:600; margin-bottom:6px;">
+          Refractometer Check
+        </div>
+        <div class="refract-row">
+          <div class="refract-input">
+            <label>Measured TDS %</label>
+            <input type="number" id="measuredTds" step="0.01" min="0" max="5"
+              placeholder="e.g. 1.36" inputmode="decimal">
+          </div>
+          <button class="refract-btn" onclick="backCalc()">Calc EY</button>
+        </div>
+        <div id="backCalcResult" style="margin-top:6px; font-size:0.82rem; color:var(--green);"></div>
+      </div>
+
+      <button class="btn btn-secondary" id="saveBtn" onclick="saveToLog()">Save to Brew Log</button>
+    </div>
+
+    <!-- SCA Chart -->
+    <div class="card">
+      <h2>SCA Chart</h2>
+      <canvas id="scaChart" width="440" height="400"></canvas>
+    </div>
+
+    <!-- Advisory -->
+    <div class="card">
+      <h2>Technique Advisory</h2>
+      <div class="advisory" id="advisoryText"></div>
+    </div>
+
+    <!-- Evidence -->
+    <div class="card">
+      <h2>Evidence Trail</h2>
+      <ul class="evidence" id="evidenceList"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE: LOG
+     ═══════════════════════════════════════ -->
+<div class="tab-page" id="pageLog">
+  <div class="card">
+    <h2>Brew Log</h2>
+    <div class="log-count" id="logCount">0 brews saved</div>
+    <div id="logEmpty" class="empty-state">
+      No brews saved yet.<br>Brew something and hit Save!
+    </div>
+    <div id="logContent" class="hidden">
+      <div class="log-scroll">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Dose</th>
+              <th>Water</th>
+              <th>Grind</th>
+              <th>Temp</th>
+              <th>Time</th>
+              <th>P.TDS</th>
+              <th>M.TDS</th>
+              <th>P.EY</th>
+              <th>M.EY</th>
+              <th>Zone</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-export" onclick="exportCSV()">Export CSV</button>
+      <button class="btn btn-danger" onclick="clearLog()">Clear All Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE: INFO
+     ═══════════════════════════════════════ -->
+<div class="tab-page" id="pageInfo">
+  <div class="card">
+    <h2>About Brew Coach v0.4.3</h2>
+    <div style="font-size:0.82rem; line-height:1.5; color:var(--muted);">
+      <p style="margin-bottom:8px;">
+        A physics-informed pour-over model using two-phase extraction kinetics
+        (Moroney et al. 2015), geometry bias (Frost 2019), and EUI heuristics.
+      </p>
+      <p style="margin-bottom:8px;">
+        Constants are evidence-tagged:
+        <strong style="color:var(--green);">[PEER]</strong>
+        <strong style="color:var(--blue);">[DERIVED]</strong>
+        <strong style="color:var(--orange);">[CONSENSUS]</strong>
+        <strong style="color:var(--highlight);">[HEURISTIC]</strong>
+      </p>
+      <p style="margin-bottom:8px;">
+        Pour-technique effects are qualitative only — no numeric coefficients.
+        Use calibration experiments to quantify for your setup.
+      </p>
+      <p style="margin-bottom:8px;">
+        <strong style="color:var(--text);">Offline:</strong> Runs entirely in your browser.
+        Data stored in localStorage. Nothing sent to any server.
+      </p>
+      <p>
+        <strong style="color:var(--text);">Add to Home Screen:</strong> In Safari, tap
+        share (⬆) → "Add to Home Screen" for standalone app experience.
+      </p>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Calibration Protocol</h2>
+    <div style="font-size:0.78rem; line-height:1.5; color:var(--muted);">
+      <p style="margin-bottom:6px;">
+        <strong style="color:var(--text);">Exp 1 — Baseline:</strong>
+        Brew 3× with standard recipe. Compare predicted vs measured TDS.
+        Offset > 0.10% → adjust constants.
+      </p>
+      <p style="margin-bottom:6px;">
+        <strong style="color:var(--text);">Exp 2 — Grind sweep:</strong>
+        Same recipe at 3 grind settings. Validates EY-vs-grind curve.
+      </p>
+      <p style="margin-bottom:6px;">
+        <strong style="color:var(--text);">Exp 3 — Pour count:</strong>
+        3× continuous vs 3× pulse (3-pour). Keep pattern constant.
+        |ΔTDS| > 0.05% = real effect.
+      </p>
+      <p>
+        <strong style="color:var(--text);">Exp 4 — Pour pattern:</strong>
+        3× centre vs 3× spiral. Keep count constant.
+        Repeat on flat-bottom to check bypass.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     TAB BAR
+     ═══════════════════════════════════════ -->
+<nav class="tab-bar">
+  <button class="tab-btn active" data-page="pageBrew" onclick="switchTab(this)">
+    <svg viewBox="0 0 24 24"><path d="M2 21V19H20V21H2ZM4 17C3.45 17 2.979 16.804 2.588 16.413C2.196 16.021 2 15.55 2 15V3H18V15C18 15.55 17.804 16.021 17.413 16.413C17.021 16.804 16.55 17 16 17H4ZM20 15V3H22V15H20ZM4 15H16V5H4V15Z"/></svg>
+    Brew
+  </button>
+  <button class="tab-btn" data-page="pageLog" onclick="switchTab(this)">
+    <svg viewBox="0 0 24 24"><path d="M3 22V2H21V22L12 17.5L3 22ZM5 18.385L12 15.077L19 18.385V4H5V18.385Z"/></svg>
+    Log
+  </button>
+  <button class="tab-btn" data-page="pageInfo" onclick="switchTab(this)">
+    <svg viewBox="0 0 24 24"><path d="M11 17H13V11H11V17ZM12 9C12.2833 9 12.521 8.904 12.713 8.712C12.904 8.521 13 8.283 13 8C13 7.717 12.904 7.479 12.713 7.287C12.521 7.096 12.2833 7 12 7C11.7167 7 11.479 7.096 11.287 7.287C11.096 7.479 11 7.717 11 8C11 8.283 11.096 8.521 11.287 8.712C11.479 8.904 11.7167 9 12 9ZM12 22C10.6167 22 9.317 21.737 8.1 21.212C6.883 20.687 5.825 19.975 4.925 19.075C4.025 18.175 3.313 17.117 2.788 15.9C2.263 14.683 2 13.383 2 12C2 10.617 2.263 9.317 2.788 8.1C3.313 6.883 4.025 5.825 4.925 4.925C5.825 4.025 6.883 3.312 8.1 2.787C9.317 2.262 10.6167 2 12 2C13.3833 2 14.683 2.262 15.9 2.787C17.117 3.312 18.175 4.025 19.075 4.925C19.975 5.825 20.688 6.883 21.213 8.1C21.738 9.317 22 10.617 22 12C22 13.383 21.738 14.683 21.213 15.9C20.688 17.117 19.975 18.175 19.075 19.075C18.175 19.975 17.117 20.687 15.9 21.212C14.683 21.737 13.3833 22 12 22Z"/></svg>
+    Info
+  </button>
+</nav>
+
+<script>
+/* ══════════════════════════════════════════
+   TAB NAVIGATION
+   ══════════════════════════════════════════ */
+function switchTab(btn) {
+  var pageId = btn.getAttribute("data-page");
+
+  // Hide all pages
+  var pages = document.querySelectorAll(".tab-page");
+  for (var i = 0; i < pages.length; i++) {
+    pages[i].classList.remove("visible");
+  }
+  // Show target
+  document.getElementById(pageId).classList.add("visible");
+
+  // Update button states
+  var btns = document.querySelectorAll(".tab-btn");
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].classList.remove("active");
+  }
+  btn.classList.add("active");
+
+  // Refresh log when switching to it
+  if (pageId === "pageLog") {
+    renderLog();
+  }
+}
+
+/* ══════════════════════════════════════════
+   GRINDER PROFILES
+   ══════════════════════════════════════════ */
+var GRINDERS = {
+  "c40":            { um: 30,   min: 8,   max: 40,  def: 20, unit: "clicks" },
+  "timemore-c2":    { um: 25,   min: 8,   max: 40,  def: 24, unit: "clicks" },
+  "timemore-s3":    { um: 15,   min: 15,  max: 70,  def: 40, unit: "clicks" },
+  "1zpresso-jx":    { um: 12.5, min: 15,  max: 80,  def: 48, unit: "clicks" },
+  "1zpresso-j":     { um: 8.8,  min: 30,  max: 120, def: 68, unit: "clicks" },
+  "1zpresso-k":     { um: 22,   min: 10,  max: 50,  def: 27, unit: "clicks" },
+  "1zpresso-q":     { um: 25,   min: 8,   max: 40,  def: 24, unit: "clicks" },
+  "kingrinder-k4":  { um: 16,   min: 15,  max: 60,  def: 38, unit: "clicks" },
+  "helor-101":      { um: 25,   min: 8,   max: 40,  def: 24, unit: "clicks" },
+  "fellow-ode":     { um: 70,   min: 1,   max: 11,  def: 5,  unit: "setting" },
+  "baratza-encore": { um: 25,   min: 1,   max: 40,  def: 15, unit: "setting" }
+};
+
+/* ══════════════════════════════════════════
+   MODEL CONSTANTS
+   ══════════════════════════════════════════ */
+var F_S = 0.50;
+var TAU_FAST = 15.0;
+var TAU_SLOW_COEFF = 0.80;
+var T_REF = 93.0;
+var T_COEFF = 0.04;
+var DEEP_BED_THRESHOLD = 20.0;
+var DEEP_BED_BONUS_PP = 0.3;
+var MAX_EXTRACTABLE = 0.30;
+var RETAINED_RATIO = 2.0;
+var EUI_BASE = 0.78;
+var EUI_GRIND_W = 0.10;
+var EUI_TEMP_W = 0.02;
+var EUI_GEOM_W = 0.04;
+
+var ROAST_MULT = {
+  "light": 0.85,
+  "light-medium": 0.925,
+  "medium": 1.00,
+  "medium-dark": 1.04,
+  "dark": 1.08
+};
+
+var GEOM_BIAS = {
+  "v60-01": 0.10,
+  "v60-02": 0.08,
+  "v60-03": 0.06,
+  "kalita-155": 0.00,
+  "kalita-185": 0.00,
+  "origami": 0.05,
+  "chemex": 0.04,
+  "flat-generic": 0.00,
+  "cone-generic": 0.08
+};
+
+var POUR_STYLE_NOTES = {
+  "continuous": "CONTINUOUS POUR — Single unbroken stream keeps slurry temperature high [Rao 2016]. whycoffee.blog: TDS 1.39%/EY 24.43% single pour on Pulsar. Magnitude: UNQUANTIFIED in peer-reviewed literature.",
+  "pulse-2-3": "PULSE (2-3) — Fresh zero-TDS water boosts concentration gradient. Re-agitates bed. Temp loss minimal (~12s per Gagne). Anecdotal +0.3-1.0 pp EY, NOT confirmed by controlled study.",
+  "pulse-4-6": "PULSE (4-6) — Multiple fresh-solvent events (Kasuya 4:6). Risk: 1-3C temp loss, fines migration. Diminishing returns beyond 3 pours."
+};
+
+var POUR_PATTERN_NOTES = {
+  "none": "",
+  "center": "CENTRE — Minimises bypass, predictable erosion. Risk: uneven outer wetting. No peer-reviewed data. Est. 0.02-0.10 %TDS [HEURISTIC].",
+  "spiral": "SPIRAL — Uniform wetting [BH 2021]. Risk: wall bypass in cones. Pour HEIGHT > lateral pattern.",
+  "spiral-center": "SPIRAL then CENTRE — Spiral bloom, centre main pour. Anecdotal only.",
+  "center-spiral": "CENTRE then SPIRAL — Centre main, spiral finish for wall wash. Anecdotal only.",
+  "melodrip": "MELODRIP — Dispersed low-agitation. Allows finer grind. Controlled data scarce."
+};
+
+/* ══════════════════════════════════════════
+   GRINDER UI
+   ══════════════════════════════════════════ */
+function getBrewGuide(um) {
+  if (um < 200) return "Turkish";
+  if (um < 300) return "espresso";
+  if (um < 400) return "fine — moka";
+  if (um < 500) return "medium-fine — AeroPress";
+  if (um < 550) return "pour-over (fine)";
+  if (um < 700) return "pour-over sweet spot";
+  if (um < 850) return "med-coarse — Chemex";
+  if (um < 1000) return "coarse — French press";
+  return "very coarse — cold brew";
+}
+
+function getGrindUm() {
+  var gType = document.getElementById("grinderType").value;
+  if (gType === "custom-um") {
+    var val = parseFloat(document.getElementById("customUm").value);
+    return isNaN(val) ? 600 : val;
+  }
+  var profile = GRINDERS[gType];
+  if (!profile) return 600;
+  var clickVal = parseInt(document.getElementById("clicks").value);
+  if (isNaN(clickVal)) return profile.def * profile.um;
+  return clickVal * profile.um;
+}
+
+function refreshSlider() {
+  var gType = document.getElementById("grinderType").value;
+  if (gType === "custom-um") return;
+
+  var profile = GRINDERS[gType];
+  if (!profile) return;
+
+  var clickVal = parseInt(document.getElementById("clicks").value);
+  if (isNaN(clickVal)) clickVal = profile.def;
+
+  var um = clickVal * profile.um;
+
+  document.getElementById("dispClicks").textContent = clickVal;
+  document.getElementById("dispUnit").textContent = profile.unit;
+  document.getElementById("dispUm").textContent = Math.round(um);
+  document.getElementById("brewGuide").textContent = "☕ " + getBrewGuide(um);
+
+  var unitLabel = profile.unit.charAt(0).toUpperCase() + profile.unit.slice(1);
+  document.getElementById("sliderLabel").textContent = unitLabel;
+}
+
+function onGrinderChange() {
+  var gType = document.getElementById("grinderType").value;
+
+  if (gType === "custom-um") {
+    document.getElementById("clicksField").classList.add("hidden");
+    document.getElementById("customUmField").classList.remove("hidden");
+    return;
+  }
+
+  document.getElementById("clicksField").classList.remove("hidden");
+  document.getElementById("customUmField").classList.add("hidden");
+
+  var profile = GRINDERS[gType];
+  if (!profile) return;
+
+  var slider = document.getElementById("clicks");
+  slider.min = profile.min;
+  slider.max = profile.max;
+  slider.value = profile.def;
+
+  refreshSlider();
+}
+
+function onSliderMove() {
+  refreshSlider();
+}
+
+/* ══════════════════════════════════════════
+   ZONE CLASSIFIER
+   ══════════════════════════════════════════ */
+function classifyZone(ey, tds) {
+  if (ey >= 18 && ey <= 22 && tds >= 1.15 && tds <= 1.35) {
+    if (ey < 20 && tds < 1.25) return "LIGHT BALANCED";
+    return "BALANCED (SCA ideal)";
+  }
+  if (ey < 18 && tds < 1.15) return "UNDER-EXTRACTED, WEAK";
+  if (ey < 18 && tds >= 1.15) return "UNDER-EXTRACTED, STRONG";
+  if (ey > 22 && tds < 1.15) return "OVER-EXTRACTED, WEAK";
+  if (ey > 22 && tds >= 1.35) return "OVER-EXTRACTED, STRONG";
+  if (ey > 22) return "OVER-EXTRACTED";
+  if (tds > 1.35) return "STRONG";
+  if (tds < 1.15) return "WEAK";
+  return "NEAR BALANCED";
+}
+
+/* ══════════════════════════════════════════
+   CUP NOTES
+   ══════════════════════════════════════════ */
+function makeCupNotes(ey, tds, roast, eui) {
+  var d = [];
+
+  if (ey < 16) d.push("sour, grassy, underdeveloped");
+  else if (ey < 18) d.push("bright acidity, tea-like");
+  else if (ey < 20) d.push("balanced acidity, emerging sweetness");
+  else if (ey < 22) d.push("sweet, full, well-developed");
+  else if (ey < 24) d.push("bittersweet, slight astringency");
+  else d.push("bitter, astringent");
+
+  if (tds < 1.0) d.push("watery");
+  else if (tds < 1.15) d.push("light body");
+  else if (tds < 1.35) d.push("medium body");
+  else if (tds < 1.55) d.push("full body");
+  else d.push("viscous");
+
+  if (roast === "light") d.push("fruit-forward, floral");
+  else if (roast === "light-medium") d.push("fruit, floral, light caramel");
+  else if (roast === "medium") d.push("nutty, caramel");
+  else if (roast === "medium-dark") d.push("chocolate, nutty");
+  else if (roast === "dark") d.push("chocolate, smoky");
+
+  if (eui < 0.65) d.push("⚠ uneven extraction likely");
+  else if (eui < 0.75) d.push("slight unevenness possible");
+
+  return d.join("; ");
+}
+
+/* ══════════════════════════════════════════
+   MAIN CALCULATION
+   ══════════════════════════════════════════ */
+var lastBrew = null;
+
+function calculate() {
+  var dose = parseFloat(document.getElementById("dose").value);
+  var water = parseFloat(document.getElementById("water").value);
+  var roast = document.getElementById("roast").value;
+  var temp = parseFloat(document.getElementById("temp").value);
+  var timeS = parseFloat(document.getElementById("brewTime").value);
+  var geom = document.getElementById("geometry").value;
+  var pourStyle = document.getElementById("pourStyle").value;
+  var pourPattern = document.getElementById("pourPattern").value;
+  var grindUm = getGrindUm();
+
+  // Validation
+  if (isNaN(dose) || isNaN(water) || isNaN(temp) || isNaN(timeS) || isNaN(grindUm)) {
+    alert("Please fill in all numeric fields.");
+    return;
+  }
+  if (dose <= 0 || water <= 0 || temp <= 0 || timeS <= 0 || grindUm <= 0) {
+    alert("All values must be positive.");
+    return;
+  }
+
+  var notes = [];
+
+  // ── Kinetics ──
+  var tauSlow = TAU_SLOW_COEFF * grindUm;
+  notes.push("τ_slow = " + tauSlow.toFixed(0) + " s [HEURISTIC: " + TAU_SLOW_COEFF + " × " + grindUm.toFixed(0) + " µm]");
+
+  var fastFrac = F_S * (1.0 - Math.exp(-timeS / TAU_FAST));
+  var slowFrac = (1.0 - F_S) * (1.0 - Math.exp(-timeS / tauSlow));
+  var exFrac = fastFrac + slowFrac;
+  notes.push("fast=" + fastFrac.toFixed(3) + " slow=" + slowFrac.toFixed(3) + " total=" + exFrac.toFixed(3) + " [Moroney 2015]");
+
+  var roastMult = ROAST_MULT[roast];
+  if (roastMult === undefined) roastMult = 1.0;
+
+  var tempDelta = (temp - T_REF) * T_COEFF;
+
+  var deepBed = 0;
+  if (dose > DEEP_BED_THRESHOLD) {
+    deepBed = ((dose - DEEP_BED_THRESHOLD) / 10.0) * DEEP_BED_BONUS_PP;
+    notes.push("deep-bed +" + deepBed.toFixed(2) + " pp [HEURISTIC]");
+  }
+
+  var maxEy = MAX_EXTRACTABLE * 100.0 * roastMult;
+  var ey = exFrac * maxEy + tempDelta + deepBed;
+  if (ey < 0) ey = 0;
+  if (ey > maxEy) ey = maxEy;
+
+  var tempSign = tempDelta >= 0 ? "+" : "";
+  notes.push("max_EY=" + maxEy.toFixed(1) + "% (×" + roastMult + ") temp=" + tempSign + tempDelta.toFixed(2) + "pp → EY=" + ey.toFixed(2) + "%");
+
+  // ── TDS ──
+  var geomBias = GEOM_BIAS[geom];
+  if (geomBias === undefined) geomBias = 0;
+  notes.push("geom_bias=+" + geomBias.toFixed(2) + " %TDS [Frost 2019]");
+
+  var retained = dose * RETAINED_RATIO;
+  var beverage = water - retained;
+  if (beverage <= 0) {
+    beverage = water * 0.7;
+    notes.push("⚠ retained > water, using 70% fallback");
+  }
+
+  var dissolved = dose * (ey / 100.0);
+  var tds = (dissolved / beverage) * 100.0 + geomBias;
+  if (tds < 0) tds = 0;
+
+  // ── EUI ──
+  var grindTerm = EUI_GRIND_W * (1.0 - grindUm / 1200.0);
+  var tempTerm = EUI_TEMP_W * ((temp - 80.0) / 20.0);
+  var geomTerm = 0;
+  if (geom.indexOf("kalita") >= 0 || geom.indexOf("flat") >= 0) {
+    geomTerm = EUI_GEOM_W;
+  }
+  var eui = EUI_BASE + grindTerm + tempTerm + geomTerm;
+  if (eui < 0.40) eui = 0.40;
+  if (eui > 0.95) eui = 0.95;
+
+  // ── Zone & Notes ──
+  var zone = classifyZone(ey, tds);
+  var cupNotesText = makeCupNotes(ey, tds, roast, eui);
+
+  // ── Advisory ──
+  var advisory = POUR_STYLE_NOTES[pourStyle] || "";
+  var patternNote = POUR_PATTERN_NOTES[pourPattern] || "";
+  if (patternNote.length > 0) {
+    advisory += "\n\n" + patternNote;
+  }
+  advisory += "\n\n⚠ All pour-technique effects are qualitative. No numeric coefficients applied. Run Experiments 3 & 4 to quantify for YOUR setup.";
+
+  // ── Store ──
+  lastBrew = {
+    dose: dose,
+    water: water,
+    beverage: beverage,
+    retained: retained,
+    ey: ey,
+    tds: tds,
+    eui: eui,
+    zone: zone,
+    cupNotes: cupNotesText,
+    grindUm: grindUm,
+    temp: temp,
+    timeS: timeS,
+    geom: geom,
+    roast: roast,
+    pourStyle: pourStyle,
+    pourPattern: pourPattern,
+    grinder: document.getElementById("grinderType").value,
+    clicks: document.getElementById("clicks").value,
+    userNotes: document.getElementById("brewNotes").value,
+    measTds: null,
+    measEy: null
+  };
+
+  // ── Update UI ──
+  document.getElementById("resultsSection").classList.remove("hidden");
+
+  document.getElementById("eyVal").textContent = ey.toFixed(2);
+  document.getElementById("tdsVal").textContent = tds.toFixed(2);
+  document.getElementById("euiVal").textContent = eui.toFixed(3);
+  document.getElementById("bevVal").textContent = Math.round(beverage);
+
+  var badge = document.getElementById("zoneBadge");
+  badge.textContent = zone;
+  badge.className = "zone-badge";
+  if (zone.indexOf("BALANCED") >= 0) badge.classList.add("zone-balanced");
+  else if (zone.indexOf("UNDER") >= 0) badge.classList.add("zone-under");
+  else if (zone.indexOf("OVER") >= 0) badge.classList.add("zone-over");
+  else badge.classList.add("zone-other");
+
+  document.getElementById("cupNotes").innerHTML = "<strong>Cup:</strong> " + escapeHtml(cupNotesText);
+  document.getElementById("advisoryText").textContent = advisory;
+
+  var evidenceEl = document.getElementById("evidenceList");
+  evidenceEl.innerHTML = "";
+  for (var i = 0; i < notes.length; i++) {
+    var li = document.createElement("li");
+    li.textContent = notes[i];
+    evidenceEl.appendChild(li);
+  }
+
+  // Reset refractometer
+  document.getElementById("measuredTds").value = "";
+  document.getElementById("backCalcResult").textContent = "";
+  document.getElementById("saveBtn").textContent = "Save to Brew Log";
+  document.getElementById("saveBtn").disabled = false;
+
+  // Draw chart
+  drawSCA(ey, tds);
+
+  // Scroll to results
+  setTimeout(function() {
+    document.getElementById("resultsSection").scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 50);
+}
+
+/* ══════════════════════════════════════════
+   HTML ESCAPE HELPER
+   ══════════════════════════════════════════ */
+function escapeHtml(str) {
+  var div = document.createElement("div");
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+/* ══════════════════════════════════════════
+   BACK CALCULATOR
+   ══════════════════════════════════════════ */
+function backCalc() {
+  if (!lastBrew) {
+    document.getElementById("backCalcResult").textContent = "Run a prediction first.";
+    return;
+  }
+  var rawVal = document.getElementById("measuredTds").value;
+  var measTds = parseFloat(rawVal);
+  if (isNaN(measTds) || measTds <= 0) {
+    document.getElementById("backCalcResult").textContent = "Enter a valid TDS value.";
+    return;
+  }
+
+  var b = lastBrew;
+  var measDissolved = (measTds / 100.0) * b.beverage;
+  var measEy = (measDissolved / b.dose) * 100.0;
+
+  var deltaTds = measTds - b.tds;
+  var deltaEy = measEy - b.ey;
+
+  var signT = deltaTds >= 0 ? "+" : "";
+  var signE = deltaEy >= 0 ? "+" : "";
+
+  var verdict = "";
+  var absDelta = Math.abs(deltaTds);
+  if (absDelta <= 0.03) verdict = " ✅ within noise";
+  else if (absDelta <= 0.10) verdict = " ⚠ small offset";
+  else verdict = " 🔴 significant — consider calibrating";
+
+  document.getElementById("backCalcResult").innerHTML =
+    "<strong>Your EY: " + measEy.toFixed(2) + "%</strong>" +
+    " (model " + b.ey.toFixed(2) + "%, Δ=" + signE + deltaEy.toFixed(2) + "pp)<br>" +
+    "TDS Δ=" + signT + deltaTds.toFixed(2) + "%" + verdict;
+
+  // Store measured values
+  lastBrew.measTds = measTds;
+  lastBrew.measEy = measEy;
+
+  // Redraw chart with both points
+  drawSCA(b.ey, b.tds, measEy, measTds);
+}
+
+/* ══════════════════════════════════════════
+   SCA CHART
+   ══════════════════════════════════════════ */
+function drawSCA(ey, tds, measEy, measTds) {
+  var canvas = document.getElementById("scaChart");
+  if (!canvas) return;
+
+  // Handle high-DPI displays
+  var dpr = window.devicePixelRatio || 1;
+  var displayW = canvas.clientWidth || 440;
+  var displayH = Math.round(displayW * 400 / 440);
+
+  canvas.width = displayW * dpr;
+  canvas.height = displayH * dpr;
+  canvas.style.width = displayW + "px";
+  canvas.style.height = displayH + "px";
+
+  var ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+
+  var W = displayW;
+  var H = displayH;
+  var pT = 30, pR = 40, pB = 40, pL = 50;
+  var eMin = 14, eMax = 26;
+  var tMin = 0.75, tMax = 1.95;
+
+  function xP(e) { return pL + (e - eMin) / (eMax - eMin) * (W - pL - pR); }
+  function yP(t) { return pT + (tMax - t) / (tMax - tMin) * (H - pT - pB); }
+
+  // Background
+  ctx.fillStyle = "#0d1117";
+  ctx.fillRect(0, 0, W, H);
+
+  // SCA ideal box
+  ctx.fillStyle = "rgba(13,122,63,0.25)";
+  var boxX = xP(18);
+  var boxY = yP(1.35);
+  var boxW = xP(22) - xP(18);
+  var boxH = yP(1.15) - yP(1.35);
+  ctx.fillRect(boxX, boxY, boxW, boxH);
+
+  ctx.strokeStyle = "rgba(78,204,163,0.6)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+  ctx.fillStyle = "rgba(78,204,163,0.7)";
+  ctx.font = "11px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("SCA Ideal", (xP(18) + xP(22)) / 2, yP(1.35) - 5);
+
+  // Zone labels
+  ctx.fillStyle = "rgba(255,255,255,0.1)";
+  ctx.font = "10px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("under-extracted", (xP(14) + xP(18)) / 2, (yP(1.5) + yP(1.1)) / 2);
+  ctx.fillText("over-extracted", (xP(22) + xP(26)) / 2, (yP(1.5) + yP(1.1)) / 2);
+
+  // Grid lines
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 1;
+  var e, t;
+  for (e = eMin; e <= eMax; e += 2) {
+    ctx.beginPath();
+    ctx.moveTo(xP(e), pT);
+    ctx.lineTo(xP(e), H - pB);
+    ctx.stroke();
+  }
+  for (t = 0.8; t <= 1.96; t += 0.1) {
+    ctx.beginPath();
+    ctx.moveTo(pL, yP(t));
+    ctx.lineTo(W - pR, yP(t));
+    ctx.stroke();
+  }
+
+  // Brew ratio diagonal lines
+  ctx.strokeStyle = "rgba(255,255,255,0.05)";
+  ctx.font = "8px -apple-system, sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.2)";
+  var ratios = [8, 10, 12, 14, 15, 16, 18, 20, 22];
+  for (var ri = 0; ri < ratios.length; ri++) {
+    var r = ratios[ri];
+    var denom = r - RETAINED_RATIO;
+    if (denom <= 0) continue;
+    var t1 = (eMin / 100.0) / denom * 100.0;
+    var t2 = (eMax / 100.0) / denom * 100.0;
+    if (t1 < tMin && t2 < tMin) continue;
+    if (t1 > tMax && t2 > tMax) continue;
+    var clampT1 = Math.max(tMin, Math.min(tMax, t1));
+    var clampT2 = Math.max(tMin, Math.min(tMax, t2));
+    ctx.beginPath();
+    ctx.moveTo(xP(eMin), yP(clampT1));
+    ctx.lineTo(xP(eMax), yP(clampT2));
+    ctx.stroke();
+    if (t2 >= tMin && t2 <= tMax) {
+      ctx.textAlign = "left";
+      ctx.fillText("1:" + r, xP(eMax) + 3, yP(t2) + 3);
+    }
+  }
+
+  // Axis tick labels
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.font = "11px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  for (e = 14; e <= 26; e += 2) {
+    ctx.fillText("" + e, xP(e), H - pB + 16);
+  }
+  ctx.textAlign = "right";
+  for (t = 0.8; t <= 1.96; t += 0.1) {
+    ctx.fillText(t.toFixed(1), pL - 6, yP(t) + 4);
+  }
+
+  // Axis titles
+  ctx.fillStyle = "rgba(255,255,255,0.5)";
+  ctx.font = "12px -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Extraction Yield %", W / 2, H - 4);
+  ctx.save();
+  ctx.translate(14, H / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText("TDS %", 0, 0);
+  ctx.restore();
+
+  // Draw dot helper
+  function drawDot(x, y, color, label, labelOffsetY) {
+    // Glow
+    var grad = ctx.createRadialGradient(x, y, 0, x, y, 16);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+
+    // Solid dot
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // White ring
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 10px -apple-system, sans-serif";
+    ctx.textAlign = "left";
+    var labelX = x + 12;
+    // Prevent label going off-screen
+    if (labelX + 120 > W) {
+      ctx.textAlign = "right";
+      labelX = x - 12;
+    }
+    ctx.fillText(label, labelX, y + labelOffsetY);
+  }
+
+  // Model point (red)
+  drawDot(xP(ey), yP(tds), "#e94560",
+    "Model: " + ey.toFixed(1) + "% / " + tds.toFixed(2), -4);
+
+  // Measured point (blue)
+  if (typeof measEy === "number" && !isNaN(measEy) &&
+      typeof measTds === "number" && !isNaN(measTds)) {
+    drawDot(xP(measEy), yP(measTds), "#42a5f5",
+      "Measured: " + measEy.toFixed(1) + "% / " + measTds.toFixed(2), 14);
+  }
+}
+
+/* ══════════════════════════════════════════
+   BREW LOG — localStorage
+   ══════════════════════════════════════════ */
+var LOG_KEY = "brewCoachLog_v043";
+
+function getLog() {
+  try {
+    var raw = localStorage.getItem(LOG_KEY);
+    if (!raw) return [];
+    var parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch (err) {
+    return [];
+  }
+}
+
+function setLog(arr) {
+  try {
+    localStorage.setItem(LOG_KEY, JSON.stringify(arr));
+  } catch (err) {
+    alert("Storage full. Please export and clear old data.");
+  }
+}
+
+function saveToLog() {
+  if (!lastBrew) {
+    alert("Run a prediction first.");
+    return;
+  }
+  var b = lastBrew;
+
+  var entry = {
+    id: Date.now(),
+    date: new Date().toISOString(),
+    dose: b.dose,
+    water: b.water,
+    grindUm: Math.round(b.grindUm),
+    grinder: b.grinder,
+    clicks: b.clicks,
+    temp: b.temp,
+    timeS: b.timeS,
+    geom: b.geom,
+    roast: b.roast,
+    pourStyle: b.pourStyle,
+    pourPattern: b.pourPattern,
+    predTds: parseFloat(b.tds.toFixed(2)),
+    predEy: parseFloat(b.ey.toFixed(2)),
+    measTds: (b.measTds !== null) ? parseFloat(b.measTds.toFixed(2)) : null,
+    measEy: (b.measEy !== null) ? parseFloat(b.measEy.toFixed(2)) : null,
+    eui: parseFloat(b.eui.toFixed(3)),
+    zone: b.zone,
+    cupNotes: b.cupNotes,
+    notes: b.userNotes || ""
+  };
+
+  var log = getLog();
+  log.push(entry);
+  setLog(log);
+
+  document.getElementById("saveBtn").textContent = "✓ Saved!";
+  document.getElementById("saveBtn").disabled = true;
+}
+
+function renderLog() {
+  var log = getLog();
+  var count = log.length;
+
+  document.getElementById("logCount").textContent =
+    count + " brew" + (count !== 1 ? "s" : "") + " saved";
+
+  if (count === 0) {
+    document.getElementById("logEmpty").classList.remove("hidden");
+    document.getElementById("logContent").classList.add("hidden");
+    return;
+  }
+
+  document.getElementById("logEmpty").classList.add("hidden");
+  document.getElementById("logContent").classList.remove("hidden");
+
+  var body = document.getElementById("logBody");
+  body.innerHTML = "";
+
+  for (var i = count - 1; i >= 0; i--) {
+    var e = log[i];
+    var d = new Date(e.date);
+    var dateStr = (d.getMonth() + 1) + "/" + d.getDate() + " " +
+      d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0");
+
+    var tr = document.createElement("tr");
+
+    var cells = [
+      count - i,
+      dateStr,
+      e.dose,
+      e.water,
+      e.grindUm + "µm",
+      e.temp + "°",
+      e.timeS + "s",
+      e.predTds,
+      (e.measTds !== null && e.measTds !== undefined) ? e.measTds : "—",
+      e.predEy,
+      (e.measEy !== null && e.measEy !== undefined) ? e.measEy : "—",
+      e.zone
+    ];
+
+    for (var j = 0; j < cells.length; j++) {
+      var td = document.createElement("td");
+      td.textContent = cells[j];
+      tr.appendChild(td);
+    }
+
+    body.appendChild(tr);
+  }
+}
+
+function clearLog() {
+  if (!confirm("Delete all saved brew data?\n\nThis cannot be undone.")) return;
+  localStorage.removeItem(LOG_KEY);
+  renderLog();
+}
+
+/* ══════════════════════════════════════════
+   CSV EXPORT
+   ══════════════════════════════════════════ */
+function csvEscape(val) {
+  if (val === null || val === undefined) return "";
+  var str = String(val);
+  if (str.indexOf(",") >= 0 || str.indexOf('"') >= 0 || str.indexOf("\n") >= 0) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+function exportCSV() {
+  var log = getLog();
+  if (log.length === 0) {
+    alert("No data to export.");
+    return;
+  }
+
+  var headers = [
+    "Date", "Dose_g", "Water_g", "Grind_um", "Grinder", "Clicks",
+    "Temp_C", "Time_s", "Dripper", "Roast", "Pour_Style", "Pour_Pattern",
+    "Pred_TDS", "Meas_TDS", "Pred_EY", "Meas_EY",
+    "EUI", "Zone", "Cup_Notes", "Notes"
+  ];
+
+  var rows = [headers.join(",")];
+
+  for (var i = 0; i < log.length; i++) {
+    var e = log[i];
+    var row = [
+      csvEscape(e.date),
+      e.dose,
+      e.water,
+      e.grindUm,
+      csvEscape(e.grinder || ""),
+      e.clicks || "",
+      e.temp,
+      e.timeS,
+      csvEscape(e.geom || ""),
+      csvEscape(e.roast || ""),
+      csvEscape(e.pourStyle || ""),
+      csvEscape(e.pourPattern || ""),
+      e.predTds,
+      (e.measTds !== null && e.measTds !== undefined) ? e.measTds : "",
+      e.predEy,
+      (e.measEy !== null && e.measEy !== undefined) ? e.measEy : "",
+      e.eui,
+      csvEscape(e.zone || ""),
+      csvEscape(e.cupNotes || ""),
+      csvEscape(e.notes || "")
+    ];
+    rows.push(row.join(","));
+  }
+
+  var csvContent = rows.join("\n");
+  var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  var url = URL.createObjectURL(blob);
+
+  var filename = "brew_coach_log_" + new Date().toISOString().slice(0, 10) + ".csv";
+
+  // Try share API first (better for iOS)
+  if (navigator.share && navigator.canShare) {
+    var file = new File([csvContent], filename, { type: "text/csv" });
+    var shareData = { files: [file] };
+    if (navigator.canShare(shareData)) {
+      navigator.share(shareData).catch(function() {
+        // Fallback to download
+        downloadFile(url, filename);
+      });
+      return;
+    }
+  }
+
+  downloadFile(url, filename);
+}
+
+function downloadFile(url, filename) {
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function() {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+/* ══════════════════════════════════════════
+   INITIALIZATION
+   ══════════════════════════════════════════ */
+refreshSlider();
+</script>
+</body>
+</html>
