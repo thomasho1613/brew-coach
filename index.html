@@ -50,7 +50,7 @@ th{color:var(--accent);font-size:11px}
 .hidden{display:none}
 .warn-box{background:#2a1a00;border:1px solid var(--warn);border-radius:6px;padding:8px;font-size:12px;color:var(--warn);margin:8px 0}
 .info-box{background:#0d1b3e;border:1px solid var(--accent2);border-radius:6px;padding:8px;font-size:12px;color:var(--muted);margin:8px 0;line-height:1.6}
-.uncertainty{font-size:11px;color:var(--muted);text-align:center}
+.uncertainty{font-size:11px;color:var(--muted);text-align:center;margin:6px 0}
 .back-calc{background:#1a2a1a;border-radius:8px;padding:12px;margin:10px 0}
 .back-calc h3{color:var(--ok)}
 .tag{font-size:9px;padding:1px 4px;border-radius:3px;margin-left:4px;vertical-align:middle}
@@ -60,6 +60,7 @@ th{color:var(--accent);font-size:11px}
 .tag-heur{background:#3a1a1a;color:#e94560}
 .tag-grinder{background:#2a1a3a;color:#b388ff}
 .tag-emp{background:#2a2a1a;color:#ddd}
+.tag-fit{background:#1a3a3a;color:#5bc0de}
 </style>
 </head>
 <body>
@@ -200,7 +201,7 @@ th{color:var(--accent);font-size:11px}
 
 <div class="card">
 <h2>SCA Control Chart</h2>
-<div class="info-box">SCA 18–22% EY zone: Lockhart 1957, reaffirmed SCAE 2014. Frost, Hedge & Ristenpart 2023 (<em>J Food Sci</em> 88:1635) propose revised consumer preference regions that don't perfectly overlap this box.</div>
+<div class="info-box">SCA 18–22% EY zone: Lockhart 1957, reaffirmed SCAE 2014. Frost, Hedge &amp; Ristenpart 2023 (<em>J Food Sci</em> 88:1635) propose revised consumer preference regions that don't perfectly overlap this box.</div>
 <canvas id="chartCanvas" width="600" height="360"></canvas>
 </div>
 
@@ -221,8 +222,8 @@ th{color:var(--accent);font-size:11px}
 <input type="number" id="measTDS" step="0.01" placeholder="e.g. 1.36">
 </div>
 <div class="field">
-<label>Spent bed mass (g) — optional, for LRR</label>
-<input type="number" id="spentBed" step="0.1" placeholder="e.g. 58.5">
+<label>Spent bed mass (g) — weigh dripper+wet grounds+filter, subtract empty dripper+dry filter weight</label>
+<input type="number" id="spentBed" step="0.1" placeholder="e.g. 58.5 (optional, for LRR)">
 </div>
 <button class="btn-small btn-brew" onclick="backCalc()">Compare</button>
 <div id="backCalcResult" class="info-box hidden"></div>
@@ -250,34 +251,34 @@ th{color:var(--accent);font-size:11px}
 <div class="card">
 <h2>Brew Coach v0.4.5</h2>
 <p style="font-size:13px;line-height:1.6;color:var(--muted)">
-Physics-informed pour-over extraction model. Two-phase kinetics with d²-scaled Fickian diffusion (Moroney et al. 2015/2019; Wang & Lim 2021) and Arrhenius temperature correction (E<sub>a</sub> = 16 kJ/mol).
+Physics-informed pour-over extraction model. Two-phase kinetics with d²-scaled Fickian diffusion (Moroney et al. 2015/2019; Wang &amp; Lim 2021) and Arrhenius temperature correction (E<sub>a</sub> = 16 kJ/mol).
 </p>
 
 <h3>What's new in v0.4.5</h3>
 <div class="info-box">
 <strong>Core model refactor (peer-reviewed):</strong><br>
-• τ_slow now scales with d² (Fickian diffusion), not linear d<br>
-• Temperature enters kinetics via Arrhenius, not additive offset<br>
-• D_eff = 1.016×10⁻¹⁰ m²/s (fitted to baseline)<br>
+• τ_slow now scales with d² (Fickian diffusion), replacing linear d<br>
+• Temperature enters kinetics via Arrhenius, replacing additive offset<br>
+• D_eff = 7.685×10⁻¹¹ m²/s (fitted to baseline at 600 µm / 88°C / 124 s / TDS 1.36%)<br>
 • EUI renamed to "Brew Confidence Score" (heuristic, not measured uniformity)<br>
 • Predictions show ±σ uncertainty band<br>
-• MAX_EXTRACTABLE re-tagged as CONVENTION-SCA<br>
-• F_s re-tagged as GRINDER-SPECIFIC-DEFAULT<br>
-• Geometry bias re-tagged as EMPIRICAL-FIT-USER-SPECIFIC<br>
-• RETAINED_RATIO re-tagged as HEURISTIC-DEFAULT<br>
-• LRR measurement added to back-calculator<br>
-• New optional brew-log fields: pour height, pour rate, jet integrity, spent bed mass<br>
+• MAX_EXTRACTABLE re-tagged CONVENTION-SCA (Lockhart 1957)<br>
+• F_s re-tagged GRINDER-SPECIFIC-DEFAULT (C40)<br>
+• Geometry bias re-tagged EMPIRICAL-FIT-USER-SPECIFIC<br>
+• RETAINED_RATIO re-tagged HEURISTIC-DEFAULT<br>
+• LRR measurement in back-calculator (weigh spent bed)<br>
+• New brew-log fields: pour height, pour rate, jet integrity, spent bed mass<br>
 • Frost et al. 2023 cited on SCA chart<br>
-• Pour-technique effects remain qualitative only (Proposal E accepted)
+• Pour-technique effects remain qualitative only
 </div>
 
 <h3>Constants</h3>
 <table>
 <tr><th>Constant</th><th>Value</th><th>Tag</th></tr>
-<tr><td>D_eff</td><td>1.016×10⁻¹⁰ m²/s</td><td><span class="tag tag-lit">FITTED-TO-BASELINE</span></td></tr>
+<tr><td>D_eff</td><td>7.685×10⁻¹¹ m²/s</td><td><span class="tag tag-fit">FITTED-TO-BASELINE</span></td></tr>
 <tr><td>F_s</td><td>0.50</td><td><span class="tag tag-grinder">GRINDER-SPECIFIC (C40)</span></td></tr>
 <tr><td>τ_fast</td><td>15 s</td><td><span class="tag tag-lit">LITERATURE</span></td></tr>
-<tr><td>E_a</td><td>16,000 J/mol</td><td><span class="tag tag-peer">PEER (Wang & Lim 2021)</span></td></tr>
+<tr><td>E_a</td><td>16,000 J/mol</td><td><span class="tag tag-peer">PEER (Wang &amp; Lim 2021)</span></td></tr>
 <tr><td>T_ref</td><td>93 °C (366 K)</td><td><span class="tag tag-peer">SCA</span></td></tr>
 <tr><td>MAX_EXTRACTABLE</td><td>0.30</td><td><span class="tag tag-conv">CONVENTION-SCA</span></td></tr>
 <tr><td>RETAINED_RATIO</td><td>2.0 mL/g</td><td><span class="tag tag-heur">HEURISTIC-DEFAULT</span></td></tr>
@@ -299,7 +300,7 @@ Physics-informed pour-over extraction model. Two-phase kinetics with d²-scaled 
 
 <h3>Dripper Geometry</h3>
 <table>
-<tr><th>Dripper</th><th>Bias</th><th>Max dose</th><th>Uncertainty</th></tr>
+<tr><th>Dripper</th><th>Bias</th><th>Max dose</th><th>σ_geom</th></tr>
 <tr><td>V60-01</td><td>+0.10%</td><td>15 g</td><td>±0.05%</td></tr>
 <tr><td>V60-02</td><td>+0.08%</td><td>25 g</td><td>±0.05%</td></tr>
 <tr><td>V60-03</td><td>+0.06%</td><td>40 g</td><td>±0.05%</td></tr>
@@ -313,26 +314,26 @@ Physics-informed pour-over extraction model. Two-phase kinetics with d²-scaled 
 
 <h3>Calibration Protocol</h3>
 <div class="info-box">
-<strong>Exp 1 — Baseline</strong>: 3× standard recipe. Compare model vs measured TDS. Adjust D_eff if offset > 0.10%.<br>
-<strong>Exp 2 — Grind sweep</strong>: 3 settings × 3 replicates. Validate TDS-vs-grind slope. Falsification: if measured slope differs from predicted by > ±0.015 %/click.<br>
-<strong>Exp 3 — Pour count</strong>: 3× continuous vs 3× pulse. |ΔTDS| > 0.05% = real effect.<br>
-<strong>Exp 4 — Pour pattern</strong>: 3× centre vs 3× spiral. Repeat on flat-bottom.<br>
-<strong>Exp 9 — Pour height</strong>: 3 heights × 3 replicates (Park et al. 2025 validation).<br>
-<strong>New</strong>: Weigh spent bed after each brew for LRR measurement.
+<strong>Exp 1 — Baseline (DONE):</strong> 3 brews. Model matches within −0.02% TDS. D_eff fitted.<br>
+<strong>Exp 2 — Grind sweep (NEXT):</strong> 17 clicks &amp; 23 clicks × 3 replicates. Validates d² slope. Falsification: measured slope outside −0.030 ± 0.015 %TDS/click.<br>
+<strong>Exp 3 — Pour count:</strong> 3× continuous vs 3× pulse. |ΔTDS| &gt; 0.05% = real effect.<br>
+<strong>Exp 4 — Pour pattern:</strong> 3× centre vs 3× spiral. Repeat on flat-bottom.<br>
+<strong>Exp 9 — Pour height (NEW):</strong> 3 heights × 3 replicates. Validates Park et al. 2025.<br>
+<strong>Protocol:</strong> Weigh spent bed after each brew for LRR measurement. Record sample temp.
 </div>
 
 <h3>References</h3>
 <div class="info-box" style="font-size:11px">
 Moroney et al. (2015) <em>Chem Eng Sci</em> 137:216–234.<br>
 Moroney et al. (2019) <em>PLOS ONE</em> 14(7):e0219906.<br>
-Wang & Lim (2021) <em>J Food Process Eng</em> 44:e13748.<br>
+Wang &amp; Lim (2021) <em>J Food Process Eng</em> 44:e13748.<br>
 Frost et al. (2020) <em>Sci Rep</em> 10:16450.<br>
-Frost, Hedge & Ristenpart (2023) <em>J Food Sci</em> 88:1635–1647.<br>
-Park, Young & Mathijssen (2025) <em>Phys Fluids</em> 37:043332.<br>
+Frost, Hedge &amp; Ristenpart (2023) <em>J Food Sci</em> 88:1635–1647.<br>
+Park, Young &amp; Mathijssen (2025) <em>Phys Fluids</em> 37:043332.<br>
 Coffee ad Astra — PSD analysis (2023); Extraction dynamics (2019).<br>
 Abbott — Coffee Extraction interactive model (stevenabbott.co.uk).<br>
 Lockhart (1957) — Coffee Brewing Institute.<br>
-Difluid R2 — TDS accuracy ±0.03%, precision ±0.02%. Device reads TDS% directly (internal Brix→TDS conversion applied; see Gómez 2019 for the ~0.85 factor).
+Difluid R2 — TDS accuracy ±0.03%, precision ±0.02%. Device reads TDS% directly via internal Brix→TDS conversion (Gómez 2019, factor ≈0.85).
 </div>
 </div>
 </div>
@@ -346,16 +347,16 @@ Difluid R2 — TDS accuracy ±0.03%, precision ±0.02%. Device reads TDS% direct
 
 <script>
 /* ========== NAVIGATION ========== */
-function showPage(id,btn){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
-  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tabs button').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
-  if(id==='pageLog') renderLog();
+  if (id === 'pageLog') renderLog();
 }
 
 /* ========== GRINDER PROFILES ========== */
-const GRINDER_PROFILES = {
+var GRINDER_PROFILES = {
   'comandante-c40': {umPerClick:30, min:5, max:45, def:20, label:'Clicks'},
   'timemore-c2':    {umPerClick:25, min:5, max:36, def:20, label:'Clicks'},
   '1zpresso-jx':    {umPerClick:12.5, min:10, max:80, def:40, label:'Clicks'},
@@ -368,190 +369,202 @@ const GRINDER_PROFILES = {
   'baratza-encore': {umPerClick:50, min:1, max:40, def:14, label:'Setting'}
 };
 
-function onGrinderChange(){
-  const t=document.getElementById('grinderType').value;
-  if(t==='custom-um'){
+function onGrinderChange() {
+  var t = document.getElementById('grinderType').value;
+  if (t === 'custom-um') {
     document.getElementById('clicksField').classList.add('hidden');
     document.getElementById('customUmField').classList.remove('hidden');
   } else {
     document.getElementById('clicksField').classList.remove('hidden');
     document.getElementById('customUmField').classList.add('hidden');
-    const p=GRINDER_PROFILES[t], sl=document.getElementById('clicks');
-    sl.min=p.min; sl.max=p.max;
-    if(parseInt(sl.value)<p.min||parseInt(sl.value)>p.max) sl.value=p.def;
-    document.getElementById('clicksLabel').textContent=p.label;
+    var p = GRINDER_PROFILES[t];
+    var sl = document.getElementById('clicks');
+    sl.min = p.min;
+    sl.max = p.max;
+    if (parseInt(sl.value) < p.min || parseInt(sl.value) > p.max) sl.value = p.def;
+    document.getElementById('clicksLabel').textContent = p.label;
     updateGrindDisplay();
   }
 }
 
-function updateGrindDisplay(){
-  const t=document.getElementById('grinderType').value;
-  if(t==='custom-um') return;
-  const p=GRINDER_PROFILES[t], cl=parseInt(document.getElementById('clicks').value);
-  const um=cl*p.umPerClick;
-  document.getElementById('clicksNum').textContent=cl;
-  document.getElementById('umDisplay').textContent=um.toFixed(0)+' µm';
-  document.getElementById('brewGuide').textContent=getBrewGuide(um);
+function updateGrindDisplay() {
+  var t = document.getElementById('grinderType').value;
+  if (t === 'custom-um') return;
+  var p = GRINDER_PROFILES[t];
+  var cl = parseInt(document.getElementById('clicks').value);
+  var um = cl * p.umPerClick;
+  document.getElementById('clicksNum').textContent = cl;
+  document.getElementById('umDisplay').textContent = um.toFixed(0) + ' µm';
+  document.getElementById('brewGuide').textContent = getBrewGuide(um);
 }
 
-function getBrewGuide(um){
-  if(um<200) return '🇹🇷 Turkish';
-  if(um<350) return '☕ espresso';
-  if(um<500) return '☕ fine drip / Aeropress';
-  if(um<700) return '☕ pour-over sweet spot';
-  if(um<900) return '☕ medium drip';
-  if(um<1100) return '☕ coarse / French press';
+function getBrewGuide(um) {
+  if (um < 200) return '\u{1F1F9}\u{1F1F7} Turkish';
+  if (um < 350) return '☕ espresso';
+  if (um < 500) return '☕ fine drip / Aeropress';
+  if (um < 700) return '☕ pour-over sweet spot';
+  if (um < 900) return '☕ medium drip';
+  if (um < 1100) return '☕ coarse / French press';
   return '❄️ cold brew';
 }
 
-function getGrindUm(){
-  const t=document.getElementById('grinderType').value;
-  if(t==='custom-um') return parseFloat(document.getElementById('customUm').value)||500;
-  const p=GRINDER_PROFILES[t];
-  return parseInt(document.getElementById('clicks').value)*p.umPerClick;
+function getGrindUm() {
+  var t = document.getElementById('grinderType').value;
+  if (t === 'custom-um') return parseFloat(document.getElementById('customUm').value) || 500;
+  var p = GRINDER_PROFILES[t];
+  return parseInt(document.getElementById('clicks').value) * p.umPerClick;
 }
 
 /* ========== MODEL CONSTANTS ========== */
-// Core kinetic constants
-const F_S = 0.50;              // GRINDER-SPECIFIC-DEFAULT (Comandante C40)
-const TAU_FAST = 15.0;         // LITERATURE (s)
-const D_EFF = 1.016e-10;       // FITTED-TO-BASELINE (m²/s)
-const PI2 = Math.PI * Math.PI; // π²
-const E_A = 16000;             // PEER: Wang & Lim 2021 (J/mol)
-const R_GAS = 8.314;           // Universal gas constant (J/(mol·K))
-const T_REF_K = 366;           // 93°C in Kelvin
+var F_S = 0.50;                // GRINDER-SPECIFIC-DEFAULT (Comandante C40)
+var TAU_FAST = 15.0;           // LITERATURE (s)
+var D_EFF = 7.685e-11;         // FIX: corrected from 1.016e-10. FITTED-TO-BASELINE (m²/s)
+var PI2 = Math.PI * Math.PI;   // π² ≈ 9.8696
+var E_A = 16000;               // PEER: Wang & Lim 2021 (J/mol)
+var R_GAS = 8.314;             // Universal gas constant (J/(mol·K))
+var T_REF_K = 366.15;          // 93°C in Kelvin
 
 // Extraction limits
-const MAX_EXTRACTABLE = 0.30;  // CONVENTION-SCA (Lockhart 1957)
-const RETAINED_RATIO = 2.0;    // HEURISTIC-DEFAULT (mL/g)
+var MAX_EXTRACTABLE = 0.30;    // CONVENTION-SCA (Lockhart 1957; Moroney 2019 shows 0.12-0.14 vol frac)
+var RETAINED_RATIO = 2.0;      // HEURISTIC-DEFAULT (mL/g). Measure spent bed to get actual LRR.
 
 // Uncertainty
-const POUR_SIGMA = 0.05;       // HEURISTIC: hand-pour noise (% TDS)
-const REFRACT_ACCURACY = 0.03; // DIFLUID R2 spec
-const REFRACT_PRECISION = 0.02;
+var POUR_SIGMA = 0.05;         // HEURISTIC: hand-pour noise (% TDS). User can tighten after 6+ replicates.
+var REFRACT_ACCURACY = 0.03;   // DIFLUID R2 spec sheet
+var REFRACT_PRECISION = 0.02;  // DIFLUID R2 spec sheet
 
 // Roast multipliers
-const ROAST_MULT = {
-  'light':0.850, 'light-medium':0.9125, 'medium':1.000,
-  'medium-dark':1.050, 'dark':1.100
+var ROAST_MULT = {
+  'light': 0.850,
+  'light-medium': 0.9125,
+  'medium': 1.000,
+  'medium-dark': 1.050,
+  'dark': 1.100
 };
 
-// Geometry: bias (EMPIRICAL-FIT-USER-SPECIFIC), max dose, uncertainty, type
-const GEOM = {
-  'v60-01':     {bias:0.10, max:15, unc:0.05, type:'cone'},
-  'v60-02':     {bias:0.08, max:25, unc:0.05, type:'cone'},
-  'v60-03':     {bias:0.06, max:40, unc:0.05, type:'cone'},
-  'kalita-155': {bias:0.02, max:18, unc:0.02, type:'flat'},
-  'kalita-185': {bias:0.02, max:30, unc:0.02, type:'flat'},
-  'origami':    {bias:0.05, max:25, unc:0.05, type:'cone'},
-  'chemex':     {bias:0.04, max:40, unc:0.05, type:'cone'},
+// Geometry: bias (EMPIRICAL-FIT-USER-SPECIFIC), max dose, uncertainty (% TDS), type
+var GEOM = {
+  'v60-01':      {bias:0.10, max:15, unc:0.05, type:'cone'},
+  'v60-02':      {bias:0.08, max:25, unc:0.05, type:'cone'},
+  'v60-03':      {bias:0.06, max:40, unc:0.05, type:'cone'},
+  'kalita-155':  {bias:0.02, max:18, unc:0.02, type:'flat'},
+  'kalita-185':  {bias:0.02, max:30, unc:0.02, type:'flat'},
+  'origami':     {bias:0.05, max:25, unc:0.05, type:'cone'},
+  'chemex':      {bias:0.04, max:40, unc:0.05, type:'cone'},
   'flat-generic':{bias:0.02, max:30, unc:0.02, type:'flat'},
   'cone-generic':{bias:0.06, max:25, unc:0.05, type:'cone'}
 };
 
 // Deep bed bonus
-const DEEP_BED_THRESHOLD = 20;
-const DEEP_BED_BONUS_PP = 0.3;
+var DEEP_BED_THRESHOLD = 20;   // grams
+var DEEP_BED_BONUS_PP = 0.3;   // pp EY per 10g above threshold
 
-// Brew Confidence Score (formerly EUI)
-const BCS_BASE = 0.78;
+// Brew Confidence Score base (renamed from EUI — Issue 9)
+var BCS_BASE = 0.78;
 
-/* ========== POUR ADVISORIES ========== */
-const POUR_STYLE_NOTES = {
-  'continuous':'Continuous pour keeps slurry temperature stable; single-stream agitation. [Rao 2016]',
-  'pulse-2-3':'Pulse (2–3): each pour adds fresh zero-TDS water, anecdotal +0.3–1.0 pp EY. Possible 1–2°C temp loss between pours. [QUALITATIVE — no numeric coefficient applied]',
-  'pulse-4-6':'Pulse (4–6): multiple fresh-solvent events; possible 1–3°C cumulative temp loss; diminishing returns after 3 pours. [QUALITATIVE — no numeric coefficient applied]'
+/* ========== POUR ADVISORIES (qualitative only — Proposal E) ========== */
+var POUR_STYLE_NOTES = {
+  'continuous': 'Continuous pour keeps slurry temperature stable; single-stream agitation. [Rao 2016]',
+  'pulse-2-3':  'Pulse (2–3): each pour adds fresh zero-TDS water, anecdotal +0.3–1.0 pp EY. Possible 1–2°C temp loss between pours. [QUALITATIVE — no numeric coefficient applied]',
+  'pulse-4-6':  'Pulse (4–6): multiple fresh-solvent events; possible 1–3°C cumulative temp loss; diminishing returns after 3 pours. [QUALITATIVE — no numeric coefficient applied]'
 };
-const POUR_PATTERN_NOTES = {
-  'none':'No pattern specified.',
-  'centre':'Centre: minimizes bypass, channels flow through bed centre. Estimated +0.02–0.10% TDS vs random pour. [HEURISTIC]',
-  'spiral':'Spiral: promotes uniform wetting across bed surface. [Barista Hustle 2021]',
-  'centre-spiral':'Centre → Spiral: bloom/saturate centre, then even out. [ANECDOTAL]',
-  'spiral-centre':'Spiral → Centre: even initial wetting, finish through centre. [ANECDOTAL]',
-  'melodrip':'Melodrip: very low agitation, gentle drip dispersion. Data scarce. [QUALITATIVE]'
+var POUR_PATTERN_NOTES = {
+  'none':           'No pattern specified.',
+  'centre':         'Centre: minimizes bypass, channels flow through bed centre. Estimated +0.02–0.10% TDS vs random pour. [HEURISTIC]',
+  'spiral':         'Spiral: promotes uniform wetting across bed surface. [Barista Hustle 2021]',
+  'centre-spiral':  'Centre → Spiral: bloom/saturate centre, then even out. [ANECDOTAL]',
+  'spiral-centre':  'Spiral → Centre: even initial wetting, finish through centre. [ANECDOTAL]',
+  'melodrip':       'Melodrip: very low agitation, gentle drip dispersion. Data scarce. [QUALITATIVE]'
 };
 
 /* ========== CORE MODEL ========== */
-function computeTauSlow(grindUm, tempC){
-  // τ_slow = d²/(π²·D_eff) × Arrhenius correction
+function computeTauSlow(grindUm, tempC) {
+  // τ_slow = d²/(π²·D_eff) × Arrhenius(T)
   // Arrhenius: τ(T) = τ(T_ref) × exp[(E_a/R)(1/T - 1/T_ref)]
-  const d_m = grindUm * 1e-6;
-  const tauRef = (d_m * d_m) / (PI2 * D_EFF);
-  const T_K = tempC + 273.15;
-  const arrhenius = Math.exp((E_A / R_GAS) * (1/T_K - 1/T_REF_K));
+  // Higher T → smaller Arrhenius factor → smaller τ → faster extraction
+  var d_m = grindUm * 1e-6;
+  var tauRef = (d_m * d_m) / (PI2 * D_EFF);
+  var T_K = tempC + 273.15;
+  var arrhenius = Math.exp((E_A / R_GAS) * (1.0 / T_K - 1.0 / T_REF_K));
   return tauRef * arrhenius;
 }
 
-function extractionFraction(t, tauSlow){
-  const fast = F_S * (1 - Math.exp(-t / TAU_FAST));
-  const slow = (1 - F_S) * (1 - Math.exp(-t / tauSlow));
-  return {fast, slow, total: fast + slow};
+function extractionFraction(t, tauSlow) {
+  var fast = F_S * (1.0 - Math.exp(-t / TAU_FAST));
+  var slow = (1.0 - F_S) * (1.0 - Math.exp(-t / tauSlow));
+  return {fast: fast, slow: slow, total: fast + slow};
 }
 
-function computeBCS(grindUm, tempC, dripperKey){
-  // Brew Confidence Score (renamed from EUI)
-  const grindTerm = 0.10 * (1 - grindUm / 1200);
-  const tempTerm = 0.02 * ((tempC - 80) / 20);
-  const geomTerm = (GEOM[dripperKey]?.type === 'flat') ? 0.03 : 0;
-  return Math.min(1, Math.max(0, BCS_BASE + grindTerm + tempTerm + geomTerm));
+function computeBCS(grindUm, tempC, dripperKey) {
+  // Brew Confidence Score — heuristic 0-1 (renamed from EUI, Issue 9)
+  // NOT a measurement of extraction uniformity. Treat as rough guide.
+  var grindTerm = 0.10 * (1.0 - grindUm / 1200.0);
+  var tempTerm = 0.02 * ((tempC - 80.0) / 20.0);
+  var geomTerm = (GEOM[dripperKey] && GEOM[dripperKey].type === 'flat') ? 0.03 : 0;
+  return Math.min(1.0, Math.max(0.0, BCS_BASE + grindTerm + tempTerm + geomTerm));
 }
 
-function runModel(){
-  const dose = parseFloat(document.getElementById('dose').value);
-  const water = parseFloat(document.getElementById('water').value);
-  const roast = document.getElementById('roast').value;
-  const roastTune = parseFloat(document.getElementById('roastTune').value);
-  const tempC = parseFloat(document.getElementById('temp').value);
-  const brewTime = parseFloat(document.getElementById('time').value);
-  const dripper = document.getElementById('dripper').value;
-  const grindUm = getGrindUm();
-  const pourStyle = document.getElementById('pourStyle').value;
-  const pourPattern = document.getElementById('pourPattern').value;
+/* ========== RUN MODEL ========== */
+function runModel() {
+  var dose = parseFloat(document.getElementById('dose').value);
+  var water = parseFloat(document.getElementById('water').value);
+  var roast = document.getElementById('roast').value;
+  var roastTune = parseFloat(document.getElementById('roastTune').value);
+  var tempC = parseFloat(document.getElementById('temp').value);
+  var brewTime = parseFloat(document.getElementById('time').value);
+  var dripper = document.getElementById('dripper').value;
+  var grindUm = getGrindUm();
+  var pourStyle = document.getElementById('pourStyle').value;
+  var pourPattern = document.getElementById('pourPattern').value;
 
-  const geo = GEOM[dripper];
-  const overpacked = dose > geo.max;
+  var geo = GEOM[dripper];
+  var overpacked = dose > geo.max;
 
-  // τ_slow with d² scaling and Arrhenius
-  const tauSlow = computeTauSlow(grindUm, tempC);
+  // τ_slow with d² scaling and Arrhenius temperature correction
+  var tauSlow = computeTauSlow(grindUm, tempC);
 
   // Extraction fractions
-  const ef = extractionFraction(brewTime, tauSlow);
+  var ef = extractionFraction(brewTime, tauSlow);
 
   // Roast-adjusted max EY
-  const rm = ROAST_MULT[roast] + roastTune;
-  const maxEY = MAX_EXTRACTABLE * 100 * rm;
+  var rm = ROAST_MULT[roast] + roastTune;
+  var maxEY = MAX_EXTRACTABLE * 100.0 * rm;
 
   // Base EY from kinetics
-  let ey = ef.total * maxEY;
+  var ey = ef.total * maxEY;
 
   // Deep-bed bonus
-  let deepBed = 0;
-  if(dose > DEEP_BED_THRESHOLD){
-    deepBed = ((dose - DEEP_BED_THRESHOLD) / 10) * DEEP_BED_BONUS_PP;
+  var deepBed = 0;
+  if (dose > DEEP_BED_THRESHOLD) {
+    deepBed = ((dose - DEEP_BED_THRESHOLD) / 10.0) * DEEP_BED_BONUS_PP;
     ey += deepBed;
   }
 
-  // Retained water & beverage
-  const retained = dose * RETAINED_RATIO;
-  const beverage = water - retained;
-  const dissolved = dose * (ey / 100);
+  // Retained water & beverage mass
+  var retained = dose * RETAINED_RATIO;
+  var beverage = water - retained;
+  if (beverage <= 0) {
+    alert('Beverage mass is zero or negative. Check dose and water inputs.');
+    return;
+  }
+  var dissolved = dose * (ey / 100.0);
 
-  // TDS with geometry bias
-  let geoBias = overpacked ? 0 : geo.bias;
-  const tds = (dissolved / beverage) * 100 + geoBias;
+  // TDS with geometry bias (zeroed if overpacked — Issue 5 / v0.4.4 guard)
+  var geoBias = overpacked ? 0 : geo.bias;
+  var tds = (dissolved / beverage) * 100.0 + geoBias;
 
   // Brew Confidence Score
-  let bcs = computeBCS(grindUm, tempC, dripper);
-  if(overpacked) bcs = Math.max(0, bcs - 0.03);
+  var bcs = computeBCS(grindUm, tempC, dripper);
+  if (overpacked) bcs = Math.max(0, bcs - 0.03);
 
-  // Uncertainty
-  const totalUnc = Math.sqrt(POUR_SIGMA**2 + geo.unc**2);
+  // Combined uncertainty (pour noise + geometry uncertainty, added in quadrature)
+  var totalUnc = Math.sqrt(POUR_SIGMA * POUR_SIGMA + geo.unc * geo.unc);
 
   // Zone classification
-  const zone = classifyZone(ey, tds);
+  var zone = classifyZone(ey, tds);
 
   // Cup notes
-  const cup = cupNotes(ey, tds);
+  var cup = cupNotes(ey, tds);
 
   // --- DISPLAY ---
   document.getElementById('resultsPanel').classList.remove('hidden');
@@ -559,127 +572,142 @@ function runModel(){
   document.getElementById('rTDS').textContent = tds.toFixed(2) + '%';
   document.getElementById('rBCS').textContent = bcs.toFixed(3);
   document.getElementById('rBev').textContent = beverage.toFixed(0) + ' g';
+
+  // Uncertainty display
+  var eyUnc = totalUnc * (dose / beverage);
   document.getElementById('rUncertainty').textContent =
-    'TDS: ' + tds.toFixed(2) + ' ± ' + totalUnc.toFixed(2) + '% (1σ)  |  EY: ' + ey.toFixed(2) + ' ± ' + (totalUnc * dose / beverage * 100).toFixed(2) + '% (1σ)';
+    'TDS: ' + tds.toFixed(2) + ' \u00B1 ' + totalUnc.toFixed(2) + '% (1\u03C3)  |  EY: ' + ey.toFixed(2) + ' \u00B1 ' + eyUnc.toFixed(2) + '% (1\u03C3)';
 
   // Zone badge
-  const zoneEl = document.getElementById('rZone');
+  var zoneEl = document.getElementById('rZone');
   zoneEl.textContent = zone.label;
   zoneEl.style.background = zone.color;
-  zoneEl.style.color = zone.textColor || '#fff';
+  zoneEl.style.color = zone.textColor;
 
   // Cup notes
   document.getElementById('rCup').textContent = cup;
 
-  // Overpacked warning
-  let advisoryHTML = '';
-  if(overpacked){
-    advisoryHTML += '<div class="warn-box">⚠️ Dose ' + dose + ' g exceeds ' + dripper + ' max (' + geo.max + ' g). Geometry bias zeroed; expect channeling. Reduce dose or use a larger dripper.</div>';
+  // Overpacked warning + pour advisory
+  var advisoryHTML = '';
+  if (overpacked) {
+    advisoryHTML += '<div class="warn-box">\u26A0\uFE0F Dose ' + dose + ' g exceeds ' + dripper + ' max (' + geo.max + ' g). Geometry bias zeroed; expect channeling. Reduce dose or use a larger dripper.</div>';
   }
-
-  // Pour advisory
-  advisoryHTML += '<strong>Pour style:</strong> ' + (POUR_STYLE_NOTES[pourStyle]||'') + '<br><br>';
-  advisoryHTML += '<strong>Pour pattern:</strong> ' + (POUR_PATTERN_NOTES[pourPattern]||'') + '<br><br>';
-  advisoryHTML += '<em>All pour-technique effects are qualitative only. No numeric coefficients applied. Run Experiments 3–4 to quantify for your setup.</em>';
+  advisoryHTML += '<strong>Pour style:</strong> ' + (POUR_STYLE_NOTES[pourStyle] || '') + '<br><br>';
+  advisoryHTML += '<strong>Pour pattern:</strong> ' + (POUR_PATTERN_NOTES[pourPattern] || '') + '<br><br>';
+  advisoryHTML += '<em>All pour-technique effects are qualitative only. No numeric coefficients applied. Run Experiments 3\u20134 to quantify for your setup.</em>';
   document.getElementById('rAdvisory').innerHTML = advisoryHTML;
 
   // Evidence trail
-  const d_m = grindUm * 1e-6;
-  const tauRef = (d_m * d_m) / (PI2 * D_EFF);
-  const T_K = tempC + 273.15;
-  const arrFactor = Math.exp((E_A / R_GAS) * (1/T_K - 1/T_REF_K));
+  var d_m = grindUm * 1e-6;
+  var tauRef = (d_m * d_m) / (PI2 * D_EFF);
+  var T_K = tempC + 273.15;
+  var arrFactor = Math.exp((E_A / R_GAS) * (1.0 / T_K - 1.0 / T_REF_K));
 
-  let ev = '';
-  ev += 'Grind: ' + grindUm + ' µm = ' + (d_m*1e6).toFixed(0) + ' µm\n';
-  ev += '<code>τ_slow(T_ref) = d²/(π²·D_eff) = ' + tauRef.toFixed(1) + ' s</code>\n';
-  ev += '<code>Arrhenius factor = exp[(E_a/R)(1/T − 1/T_ref)] = ' + arrFactor.toFixed(4) + '</code>\n';
-  ev += '<code>τ_slow(' + tempC + '°C) = ' + tauSlow.toFixed(1) + ' s</code>\n';
-  ev += '<code>Fast fraction = ' + ef.fast.toFixed(4) + '</code>\n';
-  ev += '<code>Slow fraction = ' + ef.slow.toFixed(4) + '</code>\n';
-  ev += '<code>Total extraction fraction = ' + ef.total.toFixed(4) + '</code>\n';
-  ev += '<code>Roast mult = ' + rm.toFixed(4) + ' → Max EY = ' + maxEY.toFixed(2) + '%</code>\n';
-  if(deepBed > 0) ev += '<code>Deep-bed bonus = +' + deepBed.toFixed(2) + ' pp</code>\n';
-  ev += '<code>EY = ' + ey.toFixed(2) + '%</code>\n';
-  ev += '<code>Retained = ' + retained.toFixed(0) + ' g → Beverage = ' + beverage.toFixed(0) + ' g</code>\n';
+  var ev = '';
+  ev += 'Grind: ' + grindUm + ' \u00B5m (d = ' + (d_m * 1e6).toFixed(0) + ' \u00B5m)\n';
+  ev += '<code>\u03C4_slow(93\u00B0C) = d\u00B2/(\u03C0\u00B2\u00B7D_eff) = ' + tauRef.toFixed(1) + ' s</code>\n';
+  ev += '<code>Arrhenius = exp[(E_a/R)(1/T \u2212 1/T_ref)] = ' + arrFactor.toFixed(4) + '</code>\n';
+  ev += '<code>\u03C4_slow(' + tempC + '\u00B0C) = ' + tauSlow.toFixed(1) + ' s</code>\n';
+  ev += '<code>Fast frac = ' + ef.fast.toFixed(4) + '  |  Slow frac = ' + ef.slow.toFixed(4) + '</code>\n';
+  ev += '<code>Total extraction frac = ' + ef.total.toFixed(4) + '</code>\n';
+  ev += '<code>Roast mult = ' + rm.toFixed(4) + ' \u2192 Max EY = ' + maxEY.toFixed(2) + '%</code>\n';
+  if (deepBed > 0) ev += '<code>Deep-bed bonus = +' + deepBed.toFixed(2) + ' pp</code>\n';
+  ev += '<code>Kinetic EY = ' + ey.toFixed(2) + '%</code>\n';
+  ev += '<code>Retained = ' + retained.toFixed(0) + ' g \u2192 Beverage = ' + beverage.toFixed(0) + ' g</code>\n';
   ev += '<code>Dissolved = ' + dissolved.toFixed(3) + ' g</code>\n';
-  ev += '<code>TDS = (' + dissolved.toFixed(3) + '/' + beverage.toFixed(0) + ')×100 + ' + geoBias.toFixed(2) + ' = ' + tds.toFixed(2) + '%</code>\n';
+  ev += '<code>TDS = (' + dissolved.toFixed(3) + '/' + beverage.toFixed(0) + ')\u00D7100 + ' + geoBias.toFixed(2) + ' = ' + tds.toFixed(2) + '%</code>\n';
   ev += '<code>Brew Confidence = ' + bcs.toFixed(3) + '</code>\n';
-  ev += '<code>Uncertainty (1σ) = ±' + totalUnc.toFixed(3) + '% TDS</code>';
+  ev += '<code>Uncertainty (1\u03C3) = \u00B1' + totalUnc.toFixed(3) + '% TDS</code>';
   document.getElementById('rEvidence').innerHTML = ev.replace(/\n/g, '<br>');
 
   // Chart
   drawChart(ey, tds);
 
   // Store last prediction for save/back-calc
-  window._lastPred = {dose, water, roast, roastTune, tempC, brewTime, dripper, grindUm, pourStyle, pourPattern, ey, tds, bcs, beverage, retained, zone: zone.label, cup, totalUnc, tauSlow, overpacked};
+  window._lastPred = {
+    dose:dose, water:water, roast:roast, roastTune:roastTune, tempC:tempC,
+    brewTime:brewTime, dripper:dripper, grindUm:grindUm, pourStyle:pourStyle,
+    pourPattern:pourPattern, ey:ey, tds:tds, bcs:bcs, beverage:beverage,
+    retained:retained, zone:zone.label, cup:cup, totalUnc:totalUnc,
+    tauSlow:tauSlow, overpacked:overpacked, geoBias:geoBias
+  };
 
-  // Reset back-calc
+  // Reset back-calc display
   document.getElementById('backCalcResult').classList.add('hidden');
+  window._lastMeas = null;
 }
 
-function classifyZone(ey, tds){
-  const eyLow = ey < 18, eyHigh = ey > 22;
-  const tdsLow = tds < 1.15, tdsHigh = tds > 1.45;
-  if(!eyLow && !eyHigh && !tdsLow && !tdsHigh)
-    return {label:'✅ BALANCED', color:'#1a3a1a', textColor:'#4ecca3'};
-  let parts = [];
-  if(eyLow) parts.push('Under-extracted');
-  if(eyHigh) parts.push('Over-extracted');
-  if(tdsLow) parts.push('Weak');
-  if(tdsHigh) parts.push('Strong');
-  const isWarn = parts.length === 1;
-  return {label: parts.join(', '), color: isWarn ? '#2a2a00' : '#3a1a1a',
-    textColor: isWarn ? '#f0a500' : '#e94560'};
+/* ========== ZONE & CUP NOTES ========== */
+function classifyZone(ey, tds) {
+  var eyLow = ey < 18, eyHigh = ey > 22;
+  var tdsLow = tds < 1.15, tdsHigh = tds > 1.45;
+  if (!eyLow && !eyHigh && !tdsLow && !tdsHigh)
+    return {label: '\u2705 BALANCED', color: '#1a3a1a', textColor: '#4ecca3'};
+  var parts = [];
+  if (eyLow) parts.push('Under-extracted');
+  if (eyHigh) parts.push('Over-extracted');
+  if (tdsLow) parts.push('Weak');
+  if (tdsHigh) parts.push('Strong');
+  var isWarn = parts.length === 1;
+  return {
+    label: parts.join(', '),
+    color: isWarn ? '#2a2a00' : '#3a1a1a',
+    textColor: isWarn ? '#f0a500' : '#e94560'
+  };
 }
 
-function cupNotes(ey, tds){
-  let notes = [];
-  if(ey < 16) notes.push('sour', 'grassy', 'thin');
-  else if(ey < 18) notes.push('bright acidity', 'tea-like', 'potential fruit-forward');
-  else if(ey < 20) notes.push('balanced acidity', 'emerging sweetness', 'clean');
-  else if(ey < 22) notes.push('full sweetness', 'rounded body', 'chocolate/caramel');
+function cupNotes(ey, tds) {
+  var notes = [];
+  if (ey < 16) notes.push('sour', 'grassy', 'thin');
+  else if (ey < 18) notes.push('bright acidity', 'tea-like', 'potential fruit-forward');
+  else if (ey < 20) notes.push('balanced acidity', 'emerging sweetness', 'clean');
+  else if (ey < 22) notes.push('full sweetness', 'rounded body', 'chocolate/caramel');
   else notes.push('bitter', 'astringent', 'hollow', 'dry');
-  if(tds > 1.45) notes.push('heavy body');
-  else if(tds < 1.15) notes.push('watery body');
-  return notes.join(' · ');
+  if (tds > 1.45) notes.push('heavy body');
+  else if (tds < 1.15) notes.push('watery body');
+  return notes.join(' \u00B7 ');
 }
 
 /* ========== BACK-CALCULATOR ========== */
-function backCalc(){
-  if(!window._lastPred) return;
-  const p = window._lastPred;
-  const mTDS = parseFloat(document.getElementById('measTDS').value);
-  if(isNaN(mTDS)) return;
-
-  const spentRaw = parseFloat(document.getElementById('spentBed').value);
-  let lrr = RETAINED_RATIO;
-  let lrrNote = 'Using default LRR = 2.0 mL/g';
-  let bevMeas = p.beverage;
-
-  if(!isNaN(spentRaw) && spentRaw > p.dose){
-    const retainedMeas = spentRaw - p.dose;
-    lrr = retainedMeas / p.dose;
-    bevMeas = p.water - retainedMeas;
-    lrrNote = 'Measured LRR = ' + lrr.toFixed(2) + ' mL/g (spent ' + spentRaw.toFixed(1) + ' g − dose ' + p.dose + ' g = ' + retainedMeas.toFixed(1) + ' g retained)';
+function backCalc() {
+  if (!window._lastPred) return;
+  var p = window._lastPred;
+  var mTDS = parseFloat(document.getElementById('measTDS').value);
+  if (isNaN(mTDS) || mTDS <= 0) {
+    alert('Enter a valid measured TDS value.');
+    return;
   }
 
-  const dissolvedMeas = mTDS / 100 * bevMeas;
-  const eyMeas = (dissolvedMeas / p.dose) * 100;
-  const deltaTDS = mTDS - p.tds;
-  const deltaEY = eyMeas - p.ey;
+  var spentRaw = parseFloat(document.getElementById('spentBed').value);
+  var lrr = RETAINED_RATIO;
+  var lrrNote = 'Using default LRR = ' + RETAINED_RATIO.toFixed(1) + ' mL/g (weigh spent bed for actual value)';
+  var bevMeas = p.beverage;
 
-  let severity = 'within refractometer noise';
-  let sevColor = 'var(--ok)';
-  if(Math.abs(deltaTDS) > 0.10){ severity = '🔴 significant offset'; sevColor = 'var(--bad)'; }
-  else if(Math.abs(deltaTDS) > 0.05){ severity = '⚠️ small offset'; sevColor = 'var(--warn)'; }
+  // If spent bed mass provided, compute actual LRR
+  if (!isNaN(spentRaw) && spentRaw > p.dose) {
+    var retainedMeas = spentRaw - p.dose;
+    lrr = retainedMeas / p.dose;
+    bevMeas = p.water - retainedMeas;
+    lrrNote = 'Measured LRR = ' + lrr.toFixed(2) + ' mL/g (spent ' + spentRaw.toFixed(1) + ' g \u2212 dose ' + p.dose + ' g = ' + retainedMeas.toFixed(1) + ' g retained)';
+  }
 
-  let html = '<strong>Measured TDS:</strong> ' + mTDS.toFixed(2) + '% → ';
-  html += '<strong>Measured EY:</strong> ' + eyMeas.toFixed(2) + '%<br>';
-  html += '<strong>ΔTDS:</strong> <span style="color:' + sevColor + '">' + (deltaTDS >= 0 ? '+' : '') + deltaTDS.toFixed(3) + '% (' + severity + ')</span><br>';
-  html += '<strong>ΔEY:</strong> ' + (deltaEY >= 0 ? '+' : '') + deltaEY.toFixed(2) + ' pp<br>';
+  var dissolvedMeas = (mTDS / 100.0) * bevMeas;
+  var eyMeas = (dissolvedMeas / p.dose) * 100.0;
+  var deltaTDS = mTDS - p.tds;
+  var deltaEY = eyMeas - p.ey;
+
+  var severity = '\u2705 within refractometer noise';
+  var sevColor = 'var(--ok)';
+  if (Math.abs(deltaTDS) > 0.10) { severity = '\uD83D\uDD34 significant offset'; sevColor = 'var(--bad)'; }
+  else if (Math.abs(deltaTDS) > 0.05) { severity = '\u26A0\uFE0F small offset'; sevColor = 'var(--warn)'; }
+
+  var html = '<strong>Measured TDS:</strong> ' + mTDS.toFixed(2) + '%<br>';
+  html += '<strong>Measured EY:</strong> ' + eyMeas.toFixed(2) + '% (beverage = ' + bevMeas.toFixed(0) + ' g)<br>';
+  html += '<strong>\u0394TDS:</strong> <span style="color:' + sevColor + '">' + (deltaTDS >= 0 ? '+' : '') + deltaTDS.toFixed(3) + '% (' + severity + ')</span><br>';
+  html += '<strong>\u0394EY:</strong> ' + (deltaEY >= 0 ? '+' : '') + deltaEY.toFixed(2) + ' pp<br>';
   html += '<em>' + lrrNote + '</em>';
 
-  const el = document.getElementById('backCalcResult');
+  var el = document.getElementById('backCalcResult');
   el.innerHTML = html;
   el.classList.remove('hidden');
 
@@ -687,126 +715,171 @@ function backCalc(){
   drawChart(p.ey, p.tds, eyMeas, mTDS);
 
   // Store measured data for save
-  window._lastMeas = {mTDS, eyMeas, lrr, bevMeas, deltaTDS, deltaEY};
+  window._lastMeas = {mTDS: mTDS, eyMeas: eyMeas, lrr: lrr, bevMeas: bevMeas, deltaTDS: deltaTDS, deltaEY: deltaEY};
 }
 
 /* ========== SCA CHART ========== */
-function drawChart(modelEY, modelTDS, measEY, measTDS){
-  const canvas = document.getElementById('chartCanvas');
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width = 600, H = canvas.height = 360;
-  const pad = {t:20, r:20, b:40, l:50};
-  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+function drawChart(modelEY, modelTDS, measEY, measTDS) {
+  var canvas = document.getElementById('chartCanvas');
+  var dpr = window.devicePixelRatio || 1;
+  var cssW = 600, cssH = 360;
+  canvas.width = cssW * dpr;
+  canvas.height = cssH * dpr;
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var pad = {t: 25, r: 30, b: 40, l: 50};
+  var pw = cssW - pad.l - pad.r;
+  var ph = cssH - pad.t - pad.b;
 
   // Ranges
-  const eyMin=14, eyMax=26, tdsMin=0.8, tdsMax=1.8;
-  const toX = ey => pad.l + (ey - eyMin)/(eyMax - eyMin) * pw;
-  const toY = tds => pad.t + (tdsMax - tds)/(tdsMax - tdsMin) * ph;
+  var eyMin = 14, eyMax = 26, tdsMin = 0.80, tdsMax = 1.80;
+  function toX(ey) { return pad.l + (ey - eyMin) / (eyMax - eyMin) * pw; }
+  function toY(tds) { return pad.t + (tdsMax - tds) / (tdsMax - tdsMin) * ph; }
 
-  ctx.clearRect(0,0,W,H);
+  // Background
+  ctx.clearRect(0, 0, cssW, cssH);
   ctx.fillStyle = '#0a0a1a';
-  ctx.fillRect(0,0,W,H);
+  ctx.fillRect(0, 0, cssW, cssH);
 
-  // Grid
-  ctx.strokeStyle = '#222'; ctx.lineWidth = 0.5;
-  for(let ey=14;ey<=26;ey+=2){
-    ctx.beginPath(); ctx.moveTo(toX(ey),pad.t); ctx.lineTo(toX(ey),H-pad.b); ctx.stroke();
+  // Grid lines
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 0.5;
+  for (var ey = 14; ey <= 26; ey += 2) {
+    ctx.beginPath(); ctx.moveTo(toX(ey), pad.t); ctx.lineTo(toX(ey), cssH - pad.b); ctx.stroke();
   }
-  for(let tds=0.8;tds<=1.8;tds+=0.1){
-    ctx.beginPath(); ctx.moveTo(pad.l,toY(tds)); ctx.lineTo(W-pad.r,toY(tds)); ctx.stroke();
+  for (var tds = 0.8; tds <= 1.81; tds += 0.1) {
+    ctx.beginPath(); ctx.moveTo(pad.l, toY(tds)); ctx.lineTo(cssW - pad.r, toY(tds)); ctx.stroke();
   }
 
-  // SCA box
+  // SCA ideal box (18-22% EY, 1.15-1.45% TDS)
   ctx.fillStyle = 'rgba(78,204,163,0.08)';
-  ctx.fillRect(toX(18), toY(1.45), toX(22)-toX(18), toY(1.15)-toY(1.45));
-  ctx.strokeStyle = '#4ecca3'; ctx.lineWidth = 1.5;
-  ctx.strokeRect(toX(18), toY(1.45), toX(22)-toX(18), toY(1.15)-toY(1.45));
+  ctx.fillRect(toX(18), toY(1.45), toX(22) - toX(18), toY(1.15) - toY(1.45));
+  ctx.strokeStyle = '#4ecca3';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(toX(18), toY(1.45), toX(22) - toX(18), toY(1.15) - toY(1.45));
 
   // SCA box label
-  ctx.fillStyle = '#4ecca366'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('SCA Ideal', toX(20), toY(1.45) - 4);
+  ctx.fillStyle = '#4ecca366';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('SCA Ideal (Lockhart 1957)', toX(20), toY(1.45) - 5);
 
-  // Brew ratio lines (1:14 to 1:18)
-  ctx.lineWidth = 0.5;
-  [14,15,16,17,18].forEach(r => {
+  // Brew ratio diagonal lines (1:13 to 1:18)
+  /* FIX: corrected formula from ey/(r+LRR) to ey/(r-LRR) */
+  var ratios = [13, 14, 15, 16, 17, 18];
+  for (var ri = 0; ri < ratios.length; ri++) {
+    var r = ratios[ri];
+    var denom = r - RETAINED_RATIO; // FIX: was r + RETAINED_RATIO
+    if (denom <= 0) continue;       // FIX: safety check
     ctx.strokeStyle = '#333';
+    ctx.lineWidth = 0.5;
     ctx.beginPath();
-    for(let ey=eyMin;ey<=eyMax;ey+=0.5){
-      const tds = ey / (r * 100 / 100);
-      // tds = ey% × dose / (water) approximation: tds ≈ ey/(r+retained_adj)
-      // Simplified: TDS ≈ EY / (ratio + 2) where ratio = water/dose
-      const tdsApprox = ey / (r + RETAINED_RATIO);
-      if(tdsApprox >= tdsMin && tdsApprox <= tdsMax){
-        if(ey===eyMin) ctx.moveTo(toX(ey),toY(tdsApprox));
-        else ctx.lineTo(toX(ey),toY(tdsApprox));
+    var started = false;
+    for (var e = eyMin; e <= eyMax; e += 0.5) {
+      var t = e / denom;
+      if (t >= tdsMin && t <= tdsMax) {
+        if (!started) { ctx.moveTo(toX(e), toY(t)); started = true; }
+        else ctx.lineTo(toX(e), toY(t));
       }
     }
     ctx.stroke();
-    // Label
-    ctx.fillStyle = '#444'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
-    const labelTDS = eyMax / (r + RETAINED_RATIO);
-    if(labelTDS >= tdsMin && labelTDS <= tdsMax){
-      ctx.fillText('1:'+r, toX(eyMax)+2, toY(labelTDS)+3);
+    // Label at right edge
+    var labelTDS = eyMax / denom;
+    if (labelTDS >= tdsMin && labelTDS <= tdsMax) {
+      ctx.fillStyle = '#444';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('1:' + r, toX(eyMax) + 3, toY(labelTDS) + 3);
     }
-  });
-
-  // Axis labels
-  ctx.fillStyle = '#999'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('Extraction Yield %', W/2, H - 5);
-  ctx.save(); ctx.translate(12, H/2); ctx.rotate(-Math.PI/2);
-  ctx.fillText('TDS %', 0, 0); ctx.restore();
-
-  // Tick labels
-  ctx.font = '10px sans-serif'; ctx.fillStyle = '#777';
-  ctx.textAlign = 'center';
-  for(let ey=14;ey<=26;ey+=2) ctx.fillText(ey, toX(ey), H - pad.b + 15);
-  ctx.textAlign = 'right';
-  for(let tds=0.8;tds<=1.8;tds+=0.2) ctx.fillText(tds.toFixed(1), pad.l - 6, toY(tds) + 4);
-
-  // Model point (red)
-  ctx.beginPath();
-  ctx.arc(toX(modelEY), toY(modelTDS), 7, 0, Math.PI*2);
-  ctx.fillStyle = '#e94560'; ctx.fill();
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-
-  // Uncertainty ellipse
-  if(window._lastPred){
-    const uncTDS = window._lastPred.totalUnc;
-    const uncEY = uncTDS * window._lastPred.dose / window._lastPred.beverage * 100;
-    ctx.beginPath();
-    ctx.ellipse(toX(modelEY), toY(modelTDS),
-      (uncEY/(eyMax-eyMin))*pw, (uncTDS/(tdsMax-tdsMin))*ph,
-      0, 0, Math.PI*2);
-    ctx.strokeStyle = 'rgba(233,69,96,0.3)'; ctx.lineWidth = 1; ctx.stroke();
   }
 
-  // Measured point (blue)
-  if(measEY !== undefined && measTDS !== undefined){
-    ctx.beginPath();
-    ctx.arc(toX(measEY), toY(measTDS), 7, 0, Math.PI*2);
-    ctx.fillStyle = '#5bc0de'; ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  // Axis labels
+  ctx.fillStyle = '#999';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Extraction Yield %', cssW / 2, cssH - 5);
+  ctx.save();
+  ctx.translate(13, cssH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('TDS %', 0, 0);
+  ctx.restore();
 
-    // Legend
-    ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
-    ctx.fillStyle = '#e94560'; ctx.fillText('● Model', pad.l + 10, pad.t + 14);
-    ctx.fillStyle = '#5bc0de'; ctx.fillText('● Measured', pad.l + 70, pad.t + 14);
+  // Tick labels
+  ctx.font = '10px sans-serif';
+  ctx.fillStyle = '#777';
+  ctx.textAlign = 'center';
+  for (var ey2 = 14; ey2 <= 26; ey2 += 2) {
+    ctx.fillText(ey2.toString(), toX(ey2), cssH - pad.b + 15);
+  }
+  ctx.textAlign = 'right';
+  for (var tds2 = 0.8; tds2 <= 1.81; tds2 += 0.2) {
+    ctx.fillText(tds2.toFixed(1), pad.l - 6, toY(tds2) + 4);
+  }
+
+  // Uncertainty ellipse (if prediction available)
+  if (window._lastPred) {
+    var uncTDS = window._lastPred.totalUnc;
+    var uncEY = uncTDS * (window._lastPred.dose / window._lastPred.beverage);
+    // Convert to pixel radii
+    var rxPx = (uncEY / (eyMax - eyMin)) * pw;
+    var ryPx = (uncTDS / (tdsMax - tdsMin)) * ph;
+    ctx.beginPath();
+    ctx.ellipse(toX(modelEY), toY(modelTDS), rxPx, ryPx, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(233,69,96,0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Model point (red dot)
+  ctx.beginPath();
+  ctx.arc(toX(modelEY), toY(modelTDS), 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#e94560';
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Measured point (blue dot) if provided
+  if (measEY !== undefined && measTDS !== undefined) {
+    ctx.beginPath();
+    ctx.arc(toX(measEY), toY(measTDS), 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#5bc0de';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Legend
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#e94560';
+  ctx.fillText('\u25CF Model', pad.l + 8, pad.t + 14);
+  if (measEY !== undefined) {
+    ctx.fillStyle = '#5bc0de';
+    ctx.fillText('\u25CF Measured', pad.l + 70, pad.t + 14);
   }
 }
 
 /* ========== BREW LOG ========== */
-function getLog(){
+function getLog() {
   try { return JSON.parse(localStorage.getItem('brewLog_v045') || '[]'); }
-  catch(e){ return []; }
+  catch (e) { return []; }
 }
-function saveLog(log){ localStorage.setItem('brewLog_v045', JSON.stringify(log)); }
+function saveLog(log) { localStorage.setItem('brewLog_v045', JSON.stringify(log)); }
 
-function saveBrew(){
-  if(!window._lastPred){ document.getElementById('saveMsg').textContent='Run a prediction first'; return; }
-  const p = window._lastPred;
-  const m = window._lastMeas || {};
-  const entry = {
-    date: new Date().toISOString().slice(0,19),
+function saveBrew() {
+  if (!window._lastPred) {
+    document.getElementById('saveMsg').textContent = 'Run a prediction first.';
+    return;
+  }
+  var p = window._lastPred;
+  var m = window._lastMeas || {};
+  var entry = {
+    date: new Date().toISOString().slice(0, 19),
     dose: p.dose, water: p.water, roast: p.roast, roastTune: p.roastTune,
     tempC: p.tempC, brewTime: p.brewTime, dripper: p.dripper, grindUm: p.grindUm,
     grinder: document.getElementById('grinderType').value,
@@ -818,49 +891,59 @@ function saveBrew(){
     measEY: m.eyMeas ? m.eyMeas.toFixed(2) : '',
     measLRR: m.lrr ? m.lrr.toFixed(2) : '',
     deltaTDS: m.deltaTDS !== undefined ? m.deltaTDS.toFixed(3) : '',
-    // New optional fields (user fills manually or leaves blank)
-    pourHeight: '', pourRate: '', jetIntegrity: '', spentBedMass: '', sampleTemp: '',
+    // New optional recording fields (v0.4.5 — Proposals A/B partial)
+    pourHeight: '',
+    pourRate: '',
+    jetIntegrity: '',
+    spentBedMass: '',
+    sampleTemp: '',
     notes: ''
   };
-  const log = getLog();
+  var log = getLog();
   log.push(entry);
   saveLog(log);
-  document.getElementById('saveMsg').textContent = '✅ Saved brew #' + log.length;
+  document.getElementById('saveMsg').textContent = '\u2705 Saved brew #' + log.length;
   window._lastMeas = null;
 }
 
-function renderLog(){
-  const log = getLog();
+function renderLog() {
+  var log = getLog();
   document.getElementById('logCount').textContent = log.length + ' brews saved';
-  if(log.length === 0){
+  if (log.length === 0) {
     document.getElementById('logTable').innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;margin:20px">No brews yet. Run a prediction and save it.</p>';
     return;
   }
-  let html = '<table><tr><th>#</th><th>Date</th><th>Dose</th><th>Water</th><th>Grind</th><th>Temp</th><th>Time</th><th>Pred TDS</th><th>Meas TDS</th><th>Δ</th></tr>';
-  log.forEach((b, i) => {
-    html += '<tr><td>'+(i+1)+'</td><td>'+b.date.slice(5,16)+'</td><td>'+b.dose+'g</td><td>'+b.water+'g</td><td>'+b.grindUm+'µm</td><td>'+b.tempC+'°C</td><td>'+b.brewTime+'s</td><td>'+b.predTDS+'%</td><td>'+(b.measTDS||'—')+'</td><td>'+(b.deltaTDS||'—')+'</td></tr>';
-  });
+  var html = '<table><tr><th>#</th><th>Date</th><th>Dose</th><th>Water</th><th>Grind</th><th>Temp</th><th>Time</th><th>P.TDS</th><th>M.TDS</th><th>\u0394</th></tr>';
+  for (var i = 0; i < log.length; i++) {
+    var b = log[i];
+    html += '<tr><td>' + (i + 1) + '</td><td>' + b.date.slice(5, 16) + '</td><td>' + b.dose + 'g</td><td>' + b.water + 'g</td><td>' + b.grindUm + '\u00B5m</td><td>' + b.tempC + '\u00B0C</td><td>' + b.brewTime + 's</td><td>' + b.predTDS + '%</td><td>' + (b.measTDS || '\u2014') + '</td><td>' + (b.deltaTDS || '\u2014') + '</td></tr>';
+  }
   html += '</table>';
   document.getElementById('logTable').innerHTML = html;
 }
 
-function exportCSV(){
-  const log = getLog();
-  if(log.length === 0){ alert('No data to export'); return; }
-  const headers = ['Date','Dose_g','Water_g','Roast','Roast_Tune','Temp_C','Brew_Time_s','Dripper','Grinder','Clicks','Grind_um','Pour_Style','Pour_Pattern','Pred_EY','Pred_TDS','BCS','Zone','Meas_TDS','Meas_EY','Meas_LRR','Delta_TDS','Pour_Height_cm','Pour_Rate_g_per_s','Jet_Integrity','Spent_Bed_g','Sample_Temp_C','Notes'];
-  let csv = headers.join(',') + '\n';
-  log.forEach(b => {
-    csv += [b.date,b.dose,b.water,b.roast,b.roastTune,b.tempC,b.brewTime,b.dripper,b.grinder,b.clicks,b.grindUm,b.pourStyle,b.pourPattern,b.predEY,b.predTDS,b.bcs,b.zone,b.measTDS,b.measEY,b.measLRR,b.deltaTDS,b.pourHeight||'',b.pourRate||'',b.jetIntegrity||'',b.spentBedMass||'',b.sampleTemp||'','"'+(b.notes||'')+'"'].join(',') + '\n';
-  });
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
+function exportCSV() {
+  var log = getLog();
+  if (log.length === 0) { alert('No data to export.'); return; }
+  var headers = ['Date','Dose_g','Water_g','Roast','Roast_Tune','Temp_C','Brew_Time_s','Dripper','Grinder','Clicks','Grind_um','Pour_Style','Pour_Pattern','Pred_EY','Pred_TDS','BCS','Zone','Meas_TDS','Meas_EY','Meas_LRR','Delta_TDS','Pour_Height_cm','Pour_Rate_g_per_s','Jet_Integrity','Spent_Bed_g','Sample_Temp_C','Notes'];
+  /* FIX: quote every field to handle commas in zone labels */
+  var csv = headers.join(',') + '\n';
+  for (var i = 0; i < log.length; i++) {
+    var b = log[i];
+    var row = [b.date, b.dose, b.water, b.roast, b.roastTune, b.tempC, b.brewTime, b.dripper, b.grinder, b.clicks, b.grindUm, b.pourStyle, b.pourPattern, b.predEY, b.predTDS, b.bcs, b.zone, b.measTDS, b.measEY, b.measLRR, b.deltaTDS, b.pourHeight || '', b.pourRate || '', b.jetIntegrity || '', b.spentBedMass || '', b.sampleTemp || '', b.notes || ''];
+    csv += row.map(function(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(',') + '\n';
+  }
+  var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+  var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'brew_coach_log_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.download = 'brew_coach_log_' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 }
 
-function clearLog(){
-  if(confirm('Delete all brew log data? This cannot be undone.')){
+function clearLog() {
+  if (confirm('Delete all brew log data? This cannot be undone.')) {
     localStorage.removeItem('brewLog_v045');
     renderLog();
   }
