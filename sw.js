@@ -1,4 +1,4 @@
-const CACHE = 'brew-coach-v045';
+const CACHE = 'brew-coach-v046';
 const FILES = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
