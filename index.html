@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Brew Coach v0.4.5</title>
+<title>Brew Coach v0.4.6</title>
 <link rel="manifest" href="./manifest.json">
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js');}</script>
 <style>
@@ -67,7 +67,7 @@ th{color:var(--accent);font-size:11px}
 
 <!-- ==================== BREW PAGE ==================== -->
 <div class="page active" id="pageBrew">
-<h1>☕ Brew Coach <span style="font-size:12px;color:var(--muted)">v0.4.5</span></h1>
+<h1>☕ Brew Coach <span style="font-size:12px;color:var(--muted)">v0.4.6</span></h1>
 
 <div class="card">
 <h2>Recipe</h2>
@@ -249,39 +249,32 @@ th{color:var(--accent);font-size:11px}
 <div class="page" id="pageInfo">
 <h1>ℹ️ About</h1>
 <div class="card">
-<h2>Brew Coach v0.4.5</h2>
+<h2>Brew Coach v0.4.6</h2>
 <p style="font-size:13px;line-height:1.6;color:var(--muted)">
 Physics-informed pour-over extraction model. Two-phase kinetics with d²-scaled Fickian diffusion (Moroney et al. 2015/2019; Wang &amp; Lim 2021) and Arrhenius temperature correction (E<sub>a</sub> = 16 kJ/mol).
 </p>
 
-<h3>What's new in v0.4.5</h3>
+<h3>What's new in v0.4.6</h3>
 <div class="info-box">
-<strong>Core model refactor (peer-reviewed):</strong><br>
-• τ_slow now scales with d² (Fickian diffusion), replacing linear d<br>
-• Temperature enters kinetics via Arrhenius, replacing additive offset<br>
-• D_eff = 7.685×10⁻¹¹ m²/s (fitted to baseline at 600 µm / 88°C / 124 s / TDS 1.36%)<br>
-• EUI renamed to "Brew Confidence Score" (heuristic, not measured uniformity)<br>
-• Predictions show ±σ uncertainty band<br>
-• MAX_EXTRACTABLE re-tagged CONVENTION-SCA (Lockhart 1957)<br>
-• F_s re-tagged GRINDER-SPECIFIC-DEFAULT (C40)<br>
-• Geometry bias re-tagged EMPIRICAL-FIT-USER-SPECIFIC<br>
-• RETAINED_RATIO re-tagged HEURISTIC-DEFAULT<br>
-• LRR measurement in back-calculator (weigh spent bed)<br>
-• New brew-log fields: pour height, pour rate, jet integrity, spent bed mass<br>
-• Frost et al. 2023 cited on SCA chart<br>
-• Pour-technique effects remain qualitative only
+<strong>Shell-corrected extraction model (Exp 2 validated):</strong><br>
+• Accessible-fraction correction: maxEY = 0.30 × accFrac × rm. Based on Gagné 2019 shell model.<br>
+• PENETRATION_DEPTH (λ) = 200 µm (fitted to Exp 2 grind sweep).<br>
+• D_eff refitted: 1.05×10⁻¹⁰ m²/s (was 7.685×10⁻¹¹). Fitted to Exp 1 + Exp 2 (5 data points).<br>
+• RETAINED_RATIO: 2.3 mL/g (measured, was 2.0 heuristic).<br>
+• All Exp 2 residuals ≤ ±0.03 % TDS.
 </div>
 
 <h3>Constants</h3>
 <table>
 <tr><th>Constant</th><th>Value</th><th>Tag</th></tr>
-<tr><td>D_eff</td><td>7.685×10⁻¹¹ m²/s</td><td><span class="tag tag-fit">FITTED-TO-BASELINE</span></td></tr>
+<tr><td>D_eff</td><td>1.05×10⁻¹⁰ m²/s</td><td><span class="tag tag-fit">FITTED-EXP1+EXP2</span></td></tr>
 <tr><td>F_s</td><td>0.50</td><td><span class="tag tag-grinder">GRINDER-SPECIFIC (C40)</span></td></tr>
 <tr><td>τ_fast</td><td>15 s</td><td><span class="tag tag-lit">LITERATURE</span></td></tr>
 <tr><td>E_a</td><td>16,000 J/mol</td><td><span class="tag tag-peer">PEER (Wang &amp; Lim 2021)</span></td></tr>
 <tr><td>T_ref</td><td>93 °C (366 K)</td><td><span class="tag tag-peer">SCA</span></td></tr>
 <tr><td>MAX_EXTRACTABLE</td><td>0.30</td><td><span class="tag tag-conv">CONVENTION-SCA</span></td></tr>
-<tr><td>RETAINED_RATIO</td><td>2.0 mL/g</td><td><span class="tag tag-heur">HEURISTIC-DEFAULT</span></td></tr>
+<tr><td>RETAINED_RATIO</td><td>2.3 mL/g</td><td><span class="tag tag-fit">MEASURED-EXP2</span></td></tr>
+<tr><td>PENETRATION_DEPTH (λ)</td><td>200 µm</td><td><span class="tag tag-fit">FITTED-EXP2</span></td></tr>
 <tr><td>Geometry bias (V60-02)</td><td>+0.08% TDS</td><td><span class="tag tag-emp">EMPIRICAL-FIT</span></td></tr>
 <tr><td>Pour technique σ</td><td>±0.05% TDS</td><td><span class="tag tag-heur">HEURISTIC</span></td></tr>
 <tr><td>Refractometer accuracy</td><td>±0.03% TDS</td><td><span class="tag tag-lit">DIFLUID R2 SPEC</span></td></tr>
@@ -315,7 +308,7 @@ Physics-informed pour-over extraction model. Two-phase kinetics with d²-scaled 
 <h3>Calibration Protocol</h3>
 <div class="info-box">
 <strong>Exp 1 — Baseline (DONE):</strong> 3 brews. Model matches within −0.02% TDS. D_eff fitted.<br>
-<strong>Exp 2 — Grind sweep (NEXT):</strong> 17 clicks &amp; 23 clicks × 3 replicates. Validates d² slope. Falsification: measured slope outside −0.030 ± 0.015 %TDS/click.<br>
+<strong>Exp 2 — Grind sweep (DONE):</strong> 12 brews at 15 g/225 g. Clicks 17/20/23/26 × 3 replicates. Slope −0.040 %TDS/click. λ and D_eff refitted. Residuals ≤ ±0.03 % TDS.
 <strong>Exp 3 — Pour count:</strong> 3× continuous vs 3× pulse. |ΔTDS| &gt; 0.05% = real effect.<br>
 <strong>Exp 4 — Pour pattern:</strong> 3× centre vs 3× spiral. Repeat on flat-bottom.<br>
 <strong>Exp 9 — Pour height (NEW):</strong> 3 heights × 3 replicates. Validates Park et al. 2025.<br>
@@ -324,6 +317,7 @@ Physics-informed pour-over extraction model. Two-phase kinetics with d²-scaled 
 
 <h3>References</h3>
 <div class="info-box" style="font-size:11px">
+Gagné (2019) — Extracting Shells of Coffee; The Dynamics of Coffee Extraction. coffeeadastra.com.<br>
 Moroney et al. (2015) <em>Chem Eng Sci</em> 137:216–234.<br>
 Moroney et al. (2019) <em>PLOS ONE</em> 14(7):e0219906.<br>
 Wang &amp; Lim (2021) <em>J Food Process Eng</em> 44:e13748.<br>
@@ -418,7 +412,7 @@ function getGrindUm() {
 /* ========== MODEL CONSTANTS ========== */
 var F_S = 0.50;                // GRINDER-SPECIFIC-DEFAULT (Comandante C40)
 var TAU_FAST = 15.0;           // LITERATURE (s)
-var D_EFF = 7.685e-11;         // FIX: corrected from 1.016e-10. FITTED-TO-BASELINE (m²/s)
+var D_EFF = 1.05e-10;          // FITTED-EXP1+EXP2 (m²/s). v0.4.6: refit with shell correction + LRR 2.3
 var PI2 = Math.PI * Math.PI;   // π² ≈ 9.8696
 var E_A = 16000;               // PEER: Wang & Lim 2021 (J/mol)
 var R_GAS = 8.314;             // Universal gas constant (J/(mol·K))
@@ -426,7 +420,8 @@ var T_REF_K = 366.15;          // 93°C in Kelvin
 
 // Extraction limits
 var MAX_EXTRACTABLE = 0.30;    // CONVENTION-SCA (Lockhart 1957; Moroney 2019 shows 0.12-0.14 vol frac)
-var RETAINED_RATIO = 2.0;      // HEURISTIC-DEFAULT (mL/g). Measure spent bed to get actual LRR.
+var RETAINED_RATIO = 2.3;      // MEASURED-EXP2: mean retained liquid / dose across 12 brews (mL/g)
+var PENETRATION_DEPTH = 200e-6; // FITTED-EXP2: shell extraction depth (m). Gagné 2019 ~100 µm immersion; ~200 µm fits pour-over grind sweep.
 
 // Uncertainty
 var POUR_SIGMA = 0.05;         // HEURISTIC: hand-pour noise (% TDS). User can tighten after 6+ replicates.
@@ -478,6 +473,22 @@ var POUR_PATTERN_NOTES = {
 };
 
 /* ========== CORE MODEL ========== */
+/**
+ * Accessible fraction — shell model (Gagné 2019).
+ * Only the outer shell of each particle (depth λ) is extractable
+ * in a percolation brew. Returns fraction of particle mass accessible.
+ *   accFrac = 1 − ((R − λ) / R)³
+ * where R = particle radius, λ = penetration depth.
+ * If R ≤ λ the entire particle is accessible → returns 1.
+ */
+function accessibleFraction(grindUm) {
+  var R = (grindUm * 1e-6) / 2.0;
+  var lambda = PENETRATION_DEPTH;
+  if (R <= lambda) return 1.0;
+  var ratio = (R - lambda) / R;
+  return 1.0 - ratio * ratio * ratio;
+}
+
 function computeTauSlow(grindUm, tempC) {
   // τ_slow = d²/(π²·D_eff) × Arrhenius(T)
   // Arrhenius: τ(T) = τ(T_ref) × exp[(E_a/R)(1/T - 1/T_ref)]
@@ -526,9 +537,10 @@ function runModel() {
   // Extraction fractions
   var ef = extractionFraction(brewTime, tauSlow);
 
-  // Roast-adjusted max EY
+    // Roast-adjusted max EY with accessible-fraction correction (v0.4.6)
   var rm = ROAST_MULT[roast] + roastTune;
-  var maxEY = MAX_EXTRACTABLE * 100.0 * rm;
+  var accFrac = accessibleFraction(grindUm);
+  var maxEY = MAX_EXTRACTABLE * accFrac * 100.0 * rm;
 
   // Base EY from kinetics
   var ey = ef.total * maxEY;
@@ -610,7 +622,8 @@ function runModel() {
   ev += '<code>\u03C4_slow(' + tempC + '\u00B0C) = ' + tauSlow.toFixed(1) + ' s</code>\n';
   ev += '<code>Fast frac = ' + ef.fast.toFixed(4) + '  |  Slow frac = ' + ef.slow.toFixed(4) + '</code>\n';
   ev += '<code>Total extraction frac = ' + ef.total.toFixed(4) + '</code>\n';
-  ev += '<code>Roast mult = ' + rm.toFixed(4) + ' \u2192 Max EY = ' + maxEY.toFixed(2) + '%</code>\n';
+    ev += '<code>Accessible fraction = ' + accFrac.toFixed(4) + ' (shell \u03BB = ' + (PENETRATION_DEPTH * 1e6).toFixed(0) + ' \u00B5m, R = ' + (grindUm / 2).toFixed(0) + ' \u00B5m)</code>\n';
+  ev += '<code>Roast mult = ' + rm.toFixed(4) + ' \u2192 Max EY = ' + maxEY.toFixed(2) + '% (0.30 \u00D7 ' + accFrac.toFixed(4) + ' \u00D7 100 \u00D7 ' + rm.toFixed(4) + ')</code>\n';
   if (deepBed > 0) ev += '<code>Deep-bed bonus = +' + deepBed.toFixed(2) + ' pp</code>\n';
   ev += '<code>Kinetic EY = ' + ey.toFixed(2) + '%</code>\n';
   ev += '<code>Retained = ' + retained.toFixed(0) + ' g \u2192 Beverage = ' + beverage.toFixed(0) + ' g</code>\n';
@@ -866,10 +879,10 @@ function drawChart(modelEY, modelTDS, measEY, measTDS) {
 
 /* ========== BREW LOG ========== */
 function getLog() {
-  try { return JSON.parse(localStorage.getItem('brewLog_v045') || '[]'); }
+  try { return JSON.parse(localStorage.getItem('brewLog_v046') || '[]'); }
   catch (e) { return []; }
 }
-function saveLog(log) { localStorage.setItem('brewLog_v045', JSON.stringify(log)); }
+function saveLog(log) { localStorage.setItem('brewLog_v046', JSON.stringify(log)); }
 
 function saveBrew() {
   if (!window._lastPred) {
@@ -944,7 +957,7 @@ function exportCSV() {
 
 function clearLog() {
   if (confirm('Delete all brew log data? This cannot be undone.')) {
-    localStorage.removeItem('brewLog_v045');
+    localStorage.removeItem('brewLog_v046');
     renderLog();
   }
 }
